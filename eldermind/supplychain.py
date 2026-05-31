@@ -32,7 +32,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 OSV_API = "https://api.osv.dev/v1/query"
+DEPSDEV_API = "https://api.deps.dev/v3/systems/{system}/packages/{name}/versions/{version}"
 _TIMEOUT = 5  # seconds
+
+# OSV ecosystem -> deps.dev system (for release-date lookups). Others unsupported.
+_DEPSDEV_SYSTEM = {"npm": "npm", "PyPI": "pypi", "crates.io": "cargo", "Go": "go", "Packagist": None, "RubyGems": None}
 
 # package-manager install/add verbs -> OSV ecosystem
 _INSTALLERS = {
@@ -182,6 +186,31 @@ def check_package(pkg: Package) -> ScanResult:
     if osv is not None:
         return osv
     return ScanResult(pkg, "unknown", "offline: not in curated blocklist and OSV API unreachable", "blocklist")
+
+
+def release_age_days(pkg: Package) -> int | None:
+    """Age (days) of this exact version per deps.dev, or None if unknown
+    (offline, unsupported ecosystem, unpinned version, or no publish date).
+    The one network call is in the dynamic layer, like the OSV check."""
+    system = _DEPSDEV_SYSTEM.get(pkg.ecosystem)
+    if not system or not pkg.version:
+        return None
+    from datetime import datetime, timezone
+    from urllib.parse import quote
+    url = DEPSDEV_API.format(system=system, name=quote(pkg.name, safe=""), version=quote(pkg.version, safe=""))
+    try:
+        with urllib.request.urlopen(url, timeout=_TIMEOUT) as resp:
+            payload = json.loads(resp.read().decode())
+    except (urllib.error.URLError, TimeoutError, ValueError, OSError):
+        return None
+    published = payload.get("publishedAt") or payload.get("version", {}).get("publishedAt")
+    if not published:
+        return None
+    try:
+        ts = datetime.fromisoformat(published.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return max(0, (datetime.now(timezone.utc) - ts).days)
 
 
 def scan_command(command: str) -> list[ScanResult]:

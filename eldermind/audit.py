@@ -1,22 +1,27 @@
 """
-Audit trail — append-only JSONL.
+Audit trail — append-only, hash-chained JSONL.
 
-One JSON object per line in .eldermind/audit.jsonl. No database, no Merkle
-chain in v0.1 (a hash-chain can be added later without changing this
-interface). The decision itself is deterministic (see decide.py); the audit
-event additionally carries a wall-clock timestamp, which is the per-event
-uniqueness the decision_id deliberately omits.
+One JSON object per line in .eldermind/audit.jsonl. Each entry carries `prev`
+(the previous entry's hash) and `hash` (sha256 over this entry incl. `prev`),
+forming a tamper-evident chain: altering, reordering, or deleting any entry
+breaks the chain, which `verify()` detects. No external service, no DB — the
+chain is local. `audit.head` caches the latest hash for O(1) appends.
 
-`summary()` provides the aggregate counts that back the NIST RMF "MEASURE"
-claim — MEASURE means metrics over time, not just a raw log.
+The decision itself is deterministic (see decide.py); the audit event adds a
+wall-clock timestamp — the per-event uniqueness the decision_id omits.
+
+`summary()` provides aggregate counts (NIST RMF "MEASURE" = metrics over time).
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
+
+_GENESIS = "EM-GENESIS"
 
 
 def audit_dir() -> Path:
@@ -30,14 +35,35 @@ def audit_path() -> Path:
     return audit_dir() / "audit.jsonl"
 
 
-def record(decision: dict, outcome: str = "decided", context: dict | None = None) -> str:
-    """Append one audit event. Returns the decision_id.
+def _head_path() -> Path:
+    return audit_dir() / "audit.head"
 
-    `outcome` is what actually happened downstream ("decided", "allowed",
-    "blocked", "overridden") — supplied by the caller/adapter when known.
-    """
+
+def _entry_hash(event_without_hash: dict) -> str:
+    """sha256 over the canonical event (which already includes `prev`)."""
+    canonical = json.dumps(event_without_hash, sort_keys=True, separators=(",", ":"), default=str)
+    return "sha256:" + hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def _read_head() -> str:
+    hp = _head_path()
+    if hp.exists():
+        try:
+            h = hp.read_text().strip()
+            if h:
+                return h
+        except OSError:
+            pass
+    # fall back to the last line's hash, else genesis
+    events = read_events()
+    return events[-1].get("hash", _GENESIS) if events else _GENESIS
+
+
+def record(decision: dict, outcome: str = "decided", context: dict | None = None) -> str:
+    """Append one hash-chained audit event. Returns the decision_id."""
     path = audit_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    prev = _read_head()
     event = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "decision_id": decision.get("decision_id"),
@@ -49,10 +75,38 @@ def record(decision: dict, outcome: str = "decided", context: dict | None = None
         "tier": (decision.get("risk") or {}).get("tier"),
         "reason": decision.get("reason"),
         "context": context or {},
+        "prev": prev,
     }
+    event["hash"] = _entry_hash(event)
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(event, ensure_ascii=False) + "\n")
+    try:
+        _head_path().write_text(event["hash"])
+    except OSError:
+        pass
     return event["decision_id"] or ""
+
+
+def verify(path: str | Path | None = None) -> dict:
+    """Walk the chain and confirm integrity. Returns
+    {ok, entries, broken_at, reason}. broken_at is the 1-based line number of
+    the first tampered/broken entry, or None when intact."""
+    events = read_events(path)
+    expected_prev = _GENESIS
+    for i, e in enumerate(events, start=1):
+        stored = e.get("hash")
+        if stored is None:
+            return {"ok": False, "entries": len(events), "broken_at": i,
+                    "reason": "entry missing hash (pre-chain or stripped)"}
+        recomputed = _entry_hash({k: v for k, v in e.items() if k != "hash"})
+        if recomputed != stored:
+            return {"ok": False, "entries": len(events), "broken_at": i,
+                    "reason": "content hash mismatch (entry altered)"}
+        if e.get("prev") != expected_prev:
+            return {"ok": False, "entries": len(events), "broken_at": i,
+                    "reason": "broken link (entry inserted/removed/reordered)"}
+        expected_prev = stored
+    return {"ok": True, "entries": len(events), "broken_at": None, "reason": "chain intact"}
 
 
 def read_events(path: str | Path | None = None) -> list[dict]:

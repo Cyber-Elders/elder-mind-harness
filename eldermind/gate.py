@@ -80,6 +80,24 @@ def evaluate(
             if w.status in ("clean", "unknown"):
                 decision["reason"] += " · tip: pin the version + commit your lockfile (npm ci / uv lock)"
 
+        # Release-age check (OpenSSF): brand-new versions are higher-risk, since
+        # most malicious packages are caught within their first few days.
+        if cfg.min_release_age_days > 0 and w is not None and w.status != "malicious":
+            for r in results:
+                age = supplychain.release_age_days(r.package)
+                if age is not None and age < cfg.min_release_age_days:
+                    decision["verdict"] = _more_severe(decision["verdict"], "ask")
+                    decision["suggest"] = "ask"
+                    decision["asi"] = decision.get("asi") or "ASI04"
+                    decision["preview"] = decision.get("preview") or (
+                        f"This package was published {age} day(s) ago — new versions are higher-risk."
+                    )
+                    decision["reason"] += (
+                        f"; release-age: {r.package.name}@{r.package.version} is {age}d old "
+                        f"(< {cfg.min_release_age_days}d threshold)"
+                    )
+                    break
+
     # Governance tier adjusts strictness (deterministic).
     adjusted = _apply_tier(decision["verdict"], cfg.tier)
     if adjusted != decision["verdict"]:

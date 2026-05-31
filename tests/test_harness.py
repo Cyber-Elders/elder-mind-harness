@@ -160,6 +160,45 @@ def test_pinning_tofu_and_drift(tmp_path, monkeypatch):
     assert r.status == "changed" and r.previous is not None
 
 
+def test_audit_chain_intact_and_tamper_detected(tmp_path, monkeypatch):
+    monkeypatch.setenv("ELDERMIND_DIR", str(tmp_path / ".eldermind"))
+    import importlib
+    from eldermind import audit
+    importlib.reload(audit)  # pick up the patched ELDERMIND_DIR for paths
+    audit.record({"decision_id": "EM-1", "verdict": "block", "risk": {"score": 25}}, outcome="t")
+    audit.record({"decision_id": "EM-2", "verdict": "ask", "risk": {"score": 12}}, outcome="t")
+    audit.record({"decision_id": "EM-3", "verdict": "allow", "risk": {"score": 1}}, outcome="t")
+    assert audit.verify()["ok"] is True
+    # tamper: rewrite the middle entry's verdict in the file
+    p = audit.audit_path()
+    lines = p.read_text().splitlines()
+    lines[1] = lines[1].replace('"verdict": "ask"', '"verdict": "allow"')
+    p.write_text("\n".join(lines) + "\n")
+    r = audit.verify()
+    assert r["ok"] is False and r["broken_at"] == 2
+    importlib.reload(audit)  # restore default module state for other tests
+
+
+def test_release_age_flags_new_package(monkeypatch):
+    monkeypatch.setattr(supplychain, "_query_osv",
+                        lambda pkg: supplychain.ScanResult(pkg, "clean", "ok", "osv-api"))
+    monkeypatch.setattr(supplychain, "release_age_days", lambda pkg: 2)  # 2 days old
+    d = evaluate("bash", "npm install shiny-new-pkg@1.0.0", policy=POLICY,
+                 config=Config(supplychain_enabled=True, min_release_age_days=14))
+    assert d["verdict"] == "ask"
+    assert "release-age" in d["reason"]
+
+
+def test_release_age_ignored_when_threshold_zero(monkeypatch):
+    monkeypatch.setattr(supplychain, "_query_osv",
+                        lambda pkg: supplychain.ScanResult(pkg, "clean", "ok", "osv-api"))
+    called = {"n": 0}
+    monkeypatch.setattr(supplychain, "release_age_days", lambda pkg: called.__setitem__("n", called["n"] + 1) or 1)
+    d = evaluate("bash", "npm install x@1.0.0", policy=POLICY,
+                 config=Config(supplychain_enabled=True, min_release_age_days=0))
+    assert d["verdict"] == "allow" and called["n"] == 0  # not even queried
+
+
 def test_observe_mode_never_blocks():
     d = evaluate("bash", "rm -rf /", policy=POLICY, config=Config(mode="observe"))
     assert d["verdict"] == "warn"            # downgraded — proceeds

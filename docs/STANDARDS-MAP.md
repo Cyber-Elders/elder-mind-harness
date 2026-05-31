@@ -35,7 +35,7 @@ Each function maps to an **inspectable artifact**, not a label.
 |---|---|
 | **GOVERN** | The versioned `policy.yaml` + `.eldermind/config.toml` + this document + `THREAT_MODEL.md`. Governance is written down and version-controlled. |
 | **MAP** | The `asi` field on every policy rule + the supply-chain/detector → ASI mapping (the tables here are generated from it). |
-| **MEASURE** | The append-only `audit.jsonl` (decision ids, scores, ASI tags, detector findings, supply-chain results) **plus** `eldermind summary` aggregates. Metrics over time, not just a raw log. |
+| **MEASURE** | The append-only, **hash-chained** `audit.jsonl` (decision ids, scores, ASI tags, detector findings, supply-chain results) — tamper-evident via `eldermind verify` — **plus** `eldermind summary` aggregates. Metrics over time, not just a raw log. |
 | **MANAGE** | The pre-tool gate (allow/warn/ask/block + escalation tier), the supply-chain block, and the council review are the risk response. |
 
 This is *alignment to the four-function structure*, not an RMF assessment or certification.
@@ -52,6 +52,7 @@ This is *alignment to the four-function structure*, not an RMF assessment or cer
 | `write-agent-or-ci-config` (.claude/.vscode/.mcp/CI) | ASI03 Identity & Privilege Abuse | MANAGE / MEASURE | ask |
 | `outbound-data-upload` | ASI02 Tool Misuse | MEASURE | warn |
 | supply-chain (OSV) on installs | ASI04 Agentic Supply Chain | MANAGE / MEASURE | block (opt-in) |
+| release-age (deps.dev, opt-in threshold) | ASI04 Agentic Supply Chain | MANAGE | ask (new versions higher-risk) |
 | threat detectors (regex) | ASI02 / ASI05 (heuristic) | MEASURE | warn (surface) |
 | council review | ASI01 Agent Goal Hijack | MANAGE | ask (BYO-LLM) |
 | tool-descriptor pinning | ASI02 Tool Misuse (rug-pull / deceptive tool) | GOVERN / MEASURE | new/ok/changed (TOFU + drift) |

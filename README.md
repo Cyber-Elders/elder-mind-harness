@@ -57,11 +57,11 @@ echo '{"action":"bash","target":"git push --force origin main"}' | eldermind che
 | Capability | What it does | Network? |
 |---|---|---|
 | **Pre-tool gate** | Deterministic `impact × likelihood` → allow / warn / ask / block on a versioned `policy.yaml`. Hard-blocks destructive deletes, force-push to protected branches, `curl\|bash`, secrets read/write. | No |
-| **Supply-chain** (opt-in) | On `npm/pip/cargo/...` installs, checks each package against the **OSV** database (+ OpenSSF malicious-packages), with an offline curated fallback. Catches known-compromised versions. | OSV API when enabled; degrades offline |
+| **Supply-chain** (opt-in) | On `npm/pip/cargo/...` installs, checks each package against the **OSV** database (+ OpenSSF malicious-packages) with an offline curated fallback, and optionally flags **brand-new versions** (release-age, via deps.dev). Catches known-compromised + suspiciously-fresh packages. | OSV / deps.dev when enabled; degrades offline |
 | **Threat detectors** | Heuristic regex surfacing (command-substitution, SSRF-to-metadata, path traversal, …), MITRE-tagged, written to the audit trail. Surfaces — does not hard-block legit code. | No |
 | **Council review** (BYO-LLM) | For high-risk calls, an MCP tool hands *your* model a structured deliberation task; with model routing, votes are combined by a consensus rule. No model? Falls back to asking you. | Uses your model only |
 | **Tool-descriptor pinning** | Pins a hash of each MCP/tool descriptor on first use; flags drift ("rug-pulls") if name/schema/command/args/origin change after approval. | No |
-| **Audit trail** | Append-only `.eldermind/audit.jsonl` with reproducible decision ids; `eldermind summary` aggregates; `eldermind explain <id>` reconstructs a decision. | No |
+| **Audit trail** | Append-only, **hash-chained** `.eldermind/audit.jsonl` (tamper-evident — `eldermind verify`); reproducible decision ids; `eldermind summary` aggregates; `eldermind explain <id>` reconstructs a decision. | No |
 
 **Governance tiers** modulate strictness deterministically: `explorer` (low friction — ask→warn, but never relaxes a block), `practitioner` (default, knowledge-worker safe), `governed` (warn→ask), `operator` (strictest — warn→ask, ask→block). **Observe mode** (`ELDERMIND_MODE=observe`) logs what *would* have happened but never blocks — friction-free onboarding.
 
@@ -131,6 +131,7 @@ The category framing: **local pre-action governance for coding agents** — the 
 | `eldermind check '<json>'` | Evaluate a tool call (the universal hook target). Exit 0 allow/warn, 2 ask/block. |
 | `eldermind scan <install-cmd\|lockfile>` | Supply-chain check (OSV). |
 | `eldermind explain <decision-id>` | Reconstruct a past decision from the audit log. |
+| `eldermind verify` | Verify the audit chain is intact (tamper-evident). |
 | `eldermind pin <list\|check\|reset>` | Pin tool/MCP descriptors and detect drift. |
 | `eldermind serve` | Advisory MCP server (needs `[mcp]` extra). |
 | `eldermind summary` | Audit aggregate metrics (NIST MEASURE). |

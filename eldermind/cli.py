@@ -133,6 +133,17 @@ def cmd_explain(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_verify(args: argparse.Namespace) -> int:
+    from .audit import verify
+
+    r = verify(args.path)
+    if r["ok"]:
+        print(f"✓ audit chain intact — {r['entries']} entr{'y' if r['entries']==1 else 'ies'}")
+        return 0
+    print(f"✗ audit chain BROKEN at entry {r['broken_at']} of {r['entries']}: {r['reason']}")
+    return 2
+
+
 def cmd_pin(args: argparse.Namespace) -> int:
     from .pinning import check, list_pins, reset
 
@@ -210,6 +221,10 @@ def build_parser() -> argparse.ArgumentParser:
     e = sub.add_parser("explain", help="explain a past decision by its id (from the audit log)")
     e.add_argument("decision_id", help="e.g. EM-2169fd82a466")
     e.set_defaults(func=cmd_explain)
+
+    vf = sub.add_parser("verify", help="verify the audit chain is intact (tamper-evident)")
+    vf.add_argument("--path", help="path to audit.jsonl (default: auto-resolve)")
+    vf.set_defaults(func=cmd_verify)
 
     p_ = sub.add_parser("pin", help="pin tool/MCP descriptors and detect drift (rug-pulls)")
     psub = p_.add_subparsers(dest="pin_cmd", required=True)

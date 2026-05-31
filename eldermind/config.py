@@ -21,6 +21,7 @@ class Config:
     council_models: list[str] = field(default_factory=list)
     tier: str = "practitioner"
     mode: str = "enforce"  # enforce | observe (observe = log/warn, never block)
+    min_release_age_days: int = 0  # >0 = flag installs of packages younger than this (OpenSSF)
 
 
 def config_path() -> Path:
@@ -52,9 +53,14 @@ def load_config(path: str | Path | None = None) -> Config:
     council = data.get("council", {}) or {}
     gov = data.get("governance", {}) or {}
     mode = os.environ.get("ELDERMIND_MODE") or gov.get("mode", "enforce")
+    try:
+        age = int(os.environ.get("ELDERMIND_MIN_RELEASE_AGE") or sc.get("min_release_age_days", 0))
+    except (TypeError, ValueError):
+        age = 0
     return Config(
         supplychain_enabled=_env_override(bool(sc.get("enabled", False))),
         council_models=list(council.get("models", []) or []),
         tier=str(gov.get("tier", "practitioner")),
         mode="observe" if str(mode).lower() == "observe" else "enforce",
+        min_release_age_days=max(0, age),
     )
