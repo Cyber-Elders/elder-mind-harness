@@ -143,8 +143,13 @@ def _target_matches(rule: Rule, target: str) -> bool:
     norm = _norm(target)
     for glob in rule.target_glob:
         g = _norm(glob)
-        # Match both the full path and the basename so '**/.env' and '.env' work.
-        if fnmatch.fnmatch(norm, g) or fnmatch.fnmatch(Path(norm).name, Path(g).name):
+        if fnmatch.fnmatch(norm, g):
+            return True
+        # Basename fallback so '**/.env' also matches a bare '.env' — but ONLY
+        # when the glob names a concrete file. A directory-suffix glob like
+        # '**/.claude/**' has basename '**', which would match everything.
+        gname = Path(g).name
+        if gname not in ("*", "**") and fnmatch.fnmatch(Path(norm).name, gname):
             return True
     return False
 

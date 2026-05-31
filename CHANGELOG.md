@@ -19,6 +19,10 @@ First public release: the flagship local-first agentic governance harness for co
 - **Install hygiene tip** — clean/unknown installs nudge pin + lockfile + `npm ci` (OpenSSF guidance).
 - **Package release-age** (opt-in `supplychain.min_release_age_days` / `ELDERMIND_MIN_RELEASE_AGE`) — flags installs of versions younger than the threshold via deps.dev, since most malicious packages are caught within their first few days (OpenSSF). Degrades silently offline.
 - **Tamper-evident audit** — `audit.jsonl` is now a hash chain (`prev` + `hash` per entry); `eldermind verify` walks it and reports the exact entry if anything was altered, removed, or reordered. Still local, no external service.
+- **UAT / user-journey tests** (`tests/test_journeys.py`) — three persona journeys (technical user / knowledge worker / back-office non-tech) + a CLI end-to-end, hermetic and OS-portable. Run on **macOS, Windows, and Linux** via the GitHub Actions matrix (`regression` + `user-journeys` jobs). Documented in `docs/TESTING.md`.
+
+### Fixed
+- **Glob over-match** — a directory-suffix glob (`**/.claude/**`) had basename `**`, which `fnmatch` matched against *every* path, so `write-agent-or-ci-config` prompted on all file writes. The basename fallback now applies only to concrete-file globs. (Caught by the new UAT journeys.)
 - **Supply-chain protection** (opt-in) — on package installs, checks each package against the **OSV.dev** API (+ OpenSSF malicious-packages) with a curated offline override blocklist; subshell-bypass aware. Maps to OWASP ASI04. `eldermind scan` for ad-hoc checks; `osv-scanner` used for lockfile scans when present.
 - **Threat detectors** — heuristic, MITRE-tagged regex surfacing (command-substitution, SSRF-to-metadata, path traversal, …) over tool arguments; recorded to the audit trail (surfacing, not a hard block).
 - **BYO-LLM council review** — high-risk calls can be routed to a multi-model deliberation run by the user's *own* model via the `council_review` MCP tool; consensus over configured models, or degrades to a human "ask". No API keys shipped.

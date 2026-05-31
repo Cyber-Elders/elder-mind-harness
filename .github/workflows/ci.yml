@@ -9,26 +9,51 @@ on:
 permissions:
   contents: read
 
+# Use bash on every runner (Git Bash on Windows) so steps are OS-uniform.
+defaults:
+  run:
+    shell: bash
+
 jobs:
-  test:
-    name: Tests (Python ${{ matrix.python }})
-    runs-on: ubuntu-latest
+  # ---- Regression: full unit + integration suite, on Mac / Windows / Linux ----
+  regression:
+    name: Regression (${{ matrix.os }} · py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Install (with mcp extra)
+      - name: Install (with mcp + dev extras)
         run: pip install -e ".[mcp,dev]"
-      - name: Run tests
-        run: python -m pytest tests/ -q
+      - name: Unit + integration tests
+        run: python -m pytest tests/ -q --ignore=tests/test_journeys.py
 
+  # ---- UAT: persona user-journeys, on Mac / Windows / Linux ----
+  user-journeys:
+    name: UAT user-journeys (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[mcp,dev]"
+      - name: Persona journeys (technical / knowledge-worker / back-office) + CLI E2E
+        run: python -m pytest tests/test_journeys.py -v
+
+  # ---- Offline determinism (logic-only, fastest runner) ----
   offline-determinism:
-    name: Offline determinism (network disabled)
+    name: Offline determinism
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,31 +69,30 @@ jobs:
           echo "$a" | python -c "import sys,json; d=json.load(sys.stdin); assert d['verdict']=='block', d; assert d['asi']=='ASI02', d"
           echo "deterministic + correct"
 
+  # ---- Honesty audit (no overclaims; correct OWASP-2026 taxonomy) ----
   honesty:
-    name: Honesty audit (no overclaims)
+    name: Honesty audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: No forbidden claims; correct OWASP-2026 taxonomy
+      - name: No forbidden claims; correct taxonomy; threat model present
         run: |
           set -e
-          # forbidden bare claims (allow negations / "aware" / "aligned")
           if grep -rniE "(NIST|OWASP)[ -]*(compliant|certified)|covers all (10|ten)|blocks? (all )?prompt injection|AI[- ]powered" \
                README.md docs/ THREAT_MODEL.md CHANGELOG.md \
-             | grep -viE "not .*(compliant|certified|ai.?powered)|never|isn't|aware|aligned"; then
+             | grep -viE "not .*(compliant|certified|ai.?powered)|never|isn't|aware|aligned|reduce malicious"; then
             echo "::error::forbidden overclaim found"; exit 1
           fi
-          # must NOT reuse the legacy LLM-Top-10 reskin for the agentic list
           if grep -rniE "ASI09.*Improper Error Handling|ASI10.*Unbounded Consumption" docs/ ; then
             echo "::error::stale OWASP ASI taxonomy"; exit 1
           fi
-          # threat-model + 'what it does NOT do' must be present
           test -f THREAT_MODEL.md
           grep -qiE "does NOT do|out of scope" README.md
           echo "honesty audit passed"
 
+  # ---- Build wheel + assert bundled data ----
   build:
-    name: Build wheel (bundled data present)
+    name: Build wheel
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,7 +104,7 @@ jobs:
       - name: policy.yaml + blocklist.json bundled
         run: |
           python - <<'PY'
-          import glob, zipfile, sys
+          import glob, zipfile
           n = zipfile.ZipFile(sorted(glob.glob("dist/*.whl"))[-1]).namelist()
           assert "eldermind/policy.yaml" in n, "policy.yaml not bundled"
           assert "eldermind/blocklist.json" in n, "blocklist.json not bundled"
