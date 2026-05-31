@@ -143,7 +143,9 @@ def _format_reason(decision: dict) -> str:
     risk = decision.get("risk") or {}
     score = risk.get("score")
     tier = risk.get("tier")
-    base = decision.get("reason", "")
+    # Lead with the plain-language consequence so the human sees what's at stake.
+    preview = decision.get("preview")
+    base = f"⚠ {preview}  {decision.get('reason', '')}" if preview else decision.get("reason", "")
     if score is not None:
         base += f" · risk {score}/25 ({tier}) · {decision.get('decision_id')}"
     return base

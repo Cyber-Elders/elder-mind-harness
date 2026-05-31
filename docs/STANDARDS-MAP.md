@@ -49,6 +49,7 @@ This is *alignment to the four-function structure*, not an RMF assessment or cer
 | `tmp-script-execution` | ASI05 Unexpected Code Execution | MANAGE | block |
 | `git-force-push-protected` | ASI02 Tool Misuse | MANAGE | block |
 | `write-secrets-file` / `read-cloud-credentials` | ASI03 Identity & Privilege Abuse | MANAGE / MEASURE | ask |
+| `write-agent-or-ci-config` (.claude/.vscode/.mcp/CI) | ASI03 Identity & Privilege Abuse | MANAGE / MEASURE | ask |
 | `outbound-data-upload` | ASI02 Tool Misuse | MEASURE | warn |
 | supply-chain (OSV) on installs | ASI04 Agentic Supply Chain | MANAGE / MEASURE | block (opt-in) |
 | threat detectors (regex) | ASI02 / ASI05 (heuristic) | MEASURE | warn (surface) |

@@ -51,6 +51,7 @@ def evaluate(
                 f"(ASI04 Agentic Supply Chain; {w.detail})"
             )
             decision["asi"] = decision.get("asi") or "ASI04"
+            decision["preview"] = "This may install a known-compromised or risky dependency."
         if w is not None:
             decision["supplychain"] = {
                 "status": w.status,

@@ -48,6 +48,7 @@ class Decision:
     decision_id: str  # content hash, deterministic
     policy_version: str
     detectors: list = field(default_factory=list)  # heuristic findings (deterministic)
+    preview: str = ""  # plain-language consequence, for ask/block prompts
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -147,6 +148,7 @@ def decide(
             decision_id=_decision_id(action, target, verdict, 1, pol.version),
             policy_version=pol.version,
             detectors=det_list,
+            preview=_preview_for("ASI02") if det_worst else "",
         )
 
     assessment = RiskAssessor().assess(rule.impact, rule.likelihood)
@@ -177,6 +179,7 @@ def decide(
         decision_id=_decision_id(action, target, verdict, assessment.score, pol.version),
         policy_version=pol.version,
         detectors=det_list,
+        preview=_preview_for(rule.asi),
     )
 
 
@@ -184,6 +187,22 @@ def _suggest_for(verdict: str) -> str:
     """Recommended human interaction if proceeding despite the verdict."""
     # block/ask both invite a human confirm/override path.
     return "ask" if verdict in ("block", "ask") else verdict
+
+
+# Plain-language consequence per ASI — for human-readable ask/block prompts.
+# (The assessment's top UX recommendation: tell the operator what's at stake,
+# not just the rule id.)
+_PREVIEW = {
+    "ASI01": "Untrusted input may be steering the agent's goal — check this is what you asked for.",
+    "ASI02": "This tool use can damage your system or exfiltrate data.",
+    "ASI03": "This touches credentials, keys, or execution-controlling config.",
+    "ASI04": "This may install a known-compromised or risky dependency.",
+    "ASI05": "This can execute unexpected or remote code on your machine.",
+}
+
+
+def _preview_for(asi: str | None) -> str:
+    return _PREVIEW.get(asi or "", "")
 
 
 # OWASP Top 10 for Agentic Applications (2026), final 1.0 — official titles.

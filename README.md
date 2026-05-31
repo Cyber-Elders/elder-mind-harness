@@ -106,6 +106,19 @@ This defines the trust boundary — please read it. See [`THREAT_MODEL.md`](THRE
 
 ---
 
+## Pairs with (defense in depth)
+
+Elder Mind governs **the action**, one layer after a prompt is formed. It deliberately doesn't try to be everything — pair it with:
+
+- **Prompt-injection / I-O guardrails** — Lakera, NVIDIA NeMo Guardrails, Meta LlamaFirewall, LLM Guard. They reduce malicious *intent* reaching the model; Elder Mind governs the *tool call* if something slips through.
+- **Full software-composition analysis** — `osv-scanner`, Socket, Snyk in CI for lockfile/SBOM scanning. Elder Mind catches known-bad packages at the *install moment*; SCA covers the whole tree.
+- **Observability / evals** — Langfuse, LangSmith, Arize Phoenix for traces and quality. Elder Mind keeps the *enforcement + local audit* minimal and offline.
+- **OS isolation** — run agents in a container / restricted workspace with egress controls. The gate is policy-level, not a kernel sandbox.
+
+The category framing: **local pre-action governance for coding agents** — the safety harness for the moment an agent is about to act, complementing (not replacing) enterprise control planes and guardrail filters.
+
+---
+
 ## Commands
 
 | Command | Purpose |

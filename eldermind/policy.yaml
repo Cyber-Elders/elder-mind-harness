@@ -67,21 +67,64 @@ rules:
     action: block
 
   - id: write-secrets-file
-    description: Creating or editing a secrets / private-key file.
+    description: Creating or editing a secrets / private-key / registry-token file.
     asi: ASI03            # Identity & Privilege Abuse
     match:
       tool: [edit, write, multiedit]
-      target_glob: ['**/.env', '**/.env.*', '**/*.pem', '**/id_rsa', '**/id_ed25519', '**/*.key']
+      target_glob:
+        - '**/.env'
+        - '**/.env.*'
+        - '**/*.pem'
+        - '**/*.key'
+        - '**/*.p12'
+        - '**/*.pfx'
+        - '**/id_rsa'
+        - '**/id_ed25519'
+        - '**/id_ecdsa'
+        - '**/.npmrc'           # npm auth token
+        - '**/.pypirc'          # PyPI upload token
+        - '**/.docker/config.json'
+        - '**/.kube/config'
     impact: 4
     likelihood: 4
     action: ask
 
+  - id: write-agent-or-ci-config
+    description: >-
+      Writing agent / IDE / CI config that controls execution — a known
+      supply-chain persistence target (Mini Shai-Hulud planted into .claude/
+      and .vscode/). Legitimate, but worth a human glance.
+    asi: ASI03            # Identity & Privilege Abuse (controls what runs)
+    match:
+      tool: [edit, write, multiedit]
+      target_glob:
+        - '**/.claude/**'
+        - '**/.cursor/**'
+        - '**/.kiro/**'
+        - '**/.vscode/tasks.json'
+        - '**/.vscode/settings.json'
+        - '**/.mcp.json'
+        - '**/.github/workflows/**'
+    impact: 4
+    likelihood: 3
+    action: ask
+
   - id: read-cloud-credentials
-    description: Reading cloud or environment credential files.
+    description: Reading cloud / environment / registry credential files.
     asi: ASI03            # Identity & Privilege Abuse (audit/surface)
     match:
       tool: [read, cat]
-      target_glob: ['**/.aws/credentials', '**/.env', '**/.env.*', '**/.netrc']
+      target_glob:
+        - '**/.aws/credentials'
+        - '**/.env'
+        - '**/.env.*'
+        - '**/.netrc'
+        - '**/.npmrc'
+        - '**/.pypirc'
+        - '**/.ssh/id_*'
+        - '**/.docker/config.json'
+        - '**/.kube/config'
+        - '**/gcloud/**/credentials*'
     impact: 4
     likelihood: 3
     action: ask

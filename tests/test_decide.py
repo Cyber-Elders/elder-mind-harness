@@ -133,6 +133,32 @@ def test_official_owasp_titles():
     assert "Excessive Agency" not in d.reason
 
 
+def test_agent_config_write_asks():
+    # .claude/ and .vscode/ are supply-chain persistence targets (Shai-Hulud)
+    d = decide("write", "/repo/.claude/settings.json", policy=POLICY)
+    assert d.verdict == "ask"
+    assert d.asi == "ASI03"
+    assert d.rule_id == "write-agent-or-ci-config"
+
+
+def test_npmrc_token_write_asks():
+    d = decide("edit", "/home/u/.npmrc", policy=POLICY)
+    assert d.verdict == "ask"
+    assert d.asi == "ASI03"
+
+
+def test_ssh_key_read_asks():
+    d = decide("read", "/home/u/.ssh/id_rsa", policy=POLICY)
+    assert d.verdict == "ask"
+
+
+def test_preview_present_on_block():
+    d = decide("bash", "rm -rf /", policy=POLICY)
+    assert d.preview and "damage" in d.preview.lower()  # ASI02 consequence
+    # allow case has no scary preview
+    assert decide("bash", "ls -la", policy=POLICY).preview == ""
+
+
 def test_unmatched_allows():
     d = decide("bash", "ls -la", policy=POLICY)
     assert d.verdict == "allow"
