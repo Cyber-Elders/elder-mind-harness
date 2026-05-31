@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Config loader — reads .eldermind/config.toml (stdlib tomllib, no dependency).
 

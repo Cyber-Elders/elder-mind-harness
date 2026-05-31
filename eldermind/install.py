@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 `eldermind install <tool>` — wire the gate into a harness, idempotently.
 

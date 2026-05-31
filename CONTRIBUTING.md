@@ -38,6 +38,14 @@ pytest -q
 
 See [SECURITY.md](SECURITY.md). Don't open public issues for vulnerabilities.
 
-## License
+## License & sign-off (DCO)
 
-Code contributions are under **Apache-2.0**; docs under **CC BY 4.0** (see `LICENSE` / `LICENSE-DOCS`). By contributing you agree your work is licensed accordingly.
+Code contributions are under **Apache-2.0**; docs under **CC BY 4.0** (see `LICENSE` / `LICENSE-DOCS`, and `NOTICE`). By contributing you agree your work is licensed accordingly.
+
+Please **sign off** your commits (Developer Certificate of Origin):
+
+```bash
+git commit -s -m "your message"   # adds a Signed-off-by line
+```
+
+The sign-off certifies you wrote the change (or have the right to submit it) and lets the project retain licensing flexibility. New source files should carry an SPDX header: `# SPDX-License-Identifier: Apache-2.0`.

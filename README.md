@@ -143,6 +143,20 @@ The category framing: **local pre-action governance for coding agents** — the 
 
 ---
 
+## Documentation & collateral
+
+| For | Doc |
+|---|---|
+| Architecture diagrams | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Honest OWASP/NIST mapping | [`docs/STANDARDS-MAP.md`](docs/STANDARDS-MAP.md) |
+| Trust boundary / what it does NOT do | [`THREAT_MODEL.md`](THREAT_MODEL.md) |
+| IDE × OS support matrix | [`docs/IDE-SUPPORT.md`](docs/IDE-SUPPORT.md) |
+| Testing strategy (regression + UAT + doc-as-test) | [`docs/TESTING.md`](docs/TESTING.md) |
+| Brand kit · design review · licensing | [`docs/BRAND.md`](docs/BRAND.md) · [`docs/DESIGN-REVIEW.md`](docs/DESIGN-REVIEW.md) · [`docs/LICENSING.md`](docs/LICENSING.md) |
+| **Branded PDFs** (overview · user guide · quickstart) | [`docs/pdf/`](docs/pdf/) — regenerate with `python tools/build_pdfs.py` (`pip install -e ".[pdf]"`) |
+
+---
+
 ## License
 
-Code is **Apache-2.0** ([LICENSE](LICENSE)). Documentation and methodology are **CC BY 4.0** ([LICENSE-DOCS](LICENSE-DOCS)).
+Code is **Apache-2.0** ([LICENSE](LICENSE)), with an explicit patent grant. Documentation and methodology are **CC BY 4.0** ([LICENSE-DOCS](LICENSE-DOCS)). See [`NOTICE`](NOTICE) and [`docs/LICENSING.md`](docs/LICENSING.md) for the corporate-adoption rationale — adopt the code like any other Apache-2.0 dependency.

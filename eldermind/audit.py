@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Audit trail — append-only, hash-chained JSONL.
 

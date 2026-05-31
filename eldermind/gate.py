@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Orchestration layer — combines the deterministic gate with the optional,
 network-touching supply-chain check.

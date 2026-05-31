@@ -90,6 +90,31 @@ jobs:
           grep -qiE "does NOT do|out of scope" README.md
           echo "honesty audit passed"
 
+  # ---- Branded collateral: PDFs regenerate cleanly + stay byte-stable ----
+  docs-pdf:
+    name: Branded PDFs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[pdf]"
+      - name: Generate + check byte-stability (committed PDFs are up to date)
+        run: |
+          python tools/build_pdfs.py
+          for f in docs/pdf/Elder-Mind-Overview.pdf docs/pdf/Elder-Mind-User-Guide.pdf docs/pdf/Elder-Mind-Quickstart.pdf; do
+            test -s "$f" || { echo "::error::$f missing/empty"; exit 1; }
+          done
+          if ! git diff --quiet -- docs/pdf; then
+            echo "::error::committed PDFs are stale — run 'python tools/build_pdfs.py' and commit"; exit 1
+          fi
+          echo "branded PDFs present, non-empty, and up to date"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elder-mind-collateral
+          path: docs/pdf/*.pdf
+
   # ---- Build wheel + assert bundled data ----
   build:
     name: Build wheel

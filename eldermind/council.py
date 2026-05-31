@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Council review — BYO-LLM multi-model deliberation for high-risk decisions.
 

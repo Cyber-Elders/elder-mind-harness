@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Per-harness translation for the hard-enforcement hook path.
 

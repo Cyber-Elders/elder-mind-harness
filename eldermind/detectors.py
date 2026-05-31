@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """
 Threat-pattern detectors — heuristic regex surfacing for tool arguments.
 

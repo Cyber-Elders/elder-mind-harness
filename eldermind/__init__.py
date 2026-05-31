@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 """Elder Mind — a local-first agentic governance harness for coding agents.
 
 Deterministic pre-tool-use gate (impact x likelihood -> escalation tier),
