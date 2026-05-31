@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo-banner.png" alt="Elder Mind — Agentic Governance by Cyber Elders" width="640">
+</p>
+
 # Elder Mind Governance Harness
 
 **Local-first agentic governance for coding agents.** A deterministic pre-tool-use gate that blocks risky actions, checks dependency installs for known-compromised packages, surfaces threat patterns, and can escalate high-risk calls to a multi-model "council" — all running on *your* machine with *your* model. Works in **Claude Code, OpenCode, and Kiro**.
@@ -5,6 +9,7 @@
 [![License](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC--BY--4.0-lightgrey.svg)](LICENSE-DOCS)
 [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](CHANGELOG.md)
+[![CI](https://img.shields.io/badge/CI-tests%20%C2%B7%20offline%20%C2%B7%20honesty-blue.svg)](.github/workflows/ci.yml)
 [![Standards](https://img.shields.io/badge/OWASP_Agentic_2026-aware-green.svg)](docs/STANDARDS-MAP.md)
 [![NIST](https://img.shields.io/badge/NIST_AI_RMF-aligned-green.svg)](docs/STANDARDS-MAP.md)
 
@@ -58,6 +63,19 @@ echo '{"action":"bash","target":"git push --force origin main"}' | eldermind che
 | **Audit trail** | Append-only `.eldermind/audit.jsonl` with reproducible decision ids; `eldermind summary` aggregates. | No |
 
 Two ways it plugs in: a **pre-tool hook** (the hard gate — Claude Code `PreToolUse`, OpenCode `tool.execute.before`, Kiro `preToolUse`) and an **advisory MCP server** (`govern_check`, `council_review`, `scan`, `audit_log`, `audit_summary`) usable from any MCP client.
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the wedge, runtime loop, component, and decision-engine diagrams.
+
+---
+
+## Who it's for
+
+| You are… | What you get |
+|---|---|
+| **A solo developer** running an agent 24/7 | A safety net that blocks the destructive command you didn't see coming — zero infra, install in a minute. |
+| **A team lead** rolling out coding agents | A versioned `policy.yaml` in the repo so every teammate's agent obeys the same rules, with an audit trail. |
+| **A security / risk owner** | Deterministic, reproducible decisions mapped to OWASP Agentic 2026 + NIST AI RMF, an offline audit log, and an honest threat model. |
+| **An air-gapped / privacy-sensitive shop** | Works offline; no keys, no telemetry, no cloud — the council uses *your* model, the supply-chain check is opt-in. |
 
 ---
 

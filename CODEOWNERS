@@ -1,0 +1,10 @@
+# Default owner for everything in the repo.
+* @CyberElders/core
+
+# The decision path and standards posture are load-bearing — review carefully.
+/eldermind/decide.py        @CyberElders/core
+/eldermind/risk_engine.py   @CyberElders/core
+/eldermind/policy.yaml      @CyberElders/core
+/docs/STANDARDS-MAP.md      @CyberElders/core
+/THREAT_MODEL.md            @CyberElders/core
+/.github/workflows/         @CyberElders/core

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100" width="80" height="100">
+  <defs>
+    <linearGradient id="shield-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#4338ca"/>
+      <stop offset="100%" style="stop-color:#312e81"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shield shape -->
+  <path d="M40 2 L76 16 L76 52 C76 76 58 92 40 100 C22 92 4 76 4 52 L4 16 Z"
+        fill="url(#shield-gradient)" stroke="none"/>
+
+  <!-- Inner shield outline -->
+  <path d="M40 10 L68 22 L68 50 C68 70 54 82 40 90 C26 82 12 70 12 50 L12 22 Z"
+        fill="none" stroke="#6366f1" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- 4 maturity bars -->
+  <rect x="24" y="30" width="32" height="5" rx="2.5" fill="#22c55e" opacity="0.9"/>
+  <rect x="22" y="39" width="36" height="5" rx="2.5" fill="#3b82f6" opacity="0.9"/>
+  <rect x="20" y="48" width="40" height="5" rx="2.5" fill="#f97316" opacity="0.9"/>
+  <rect x="18" y="57" width="44" height="5" rx="2.5" fill="#a855f7" opacity="0.9"/>
+
+  <!-- Upward governance chevron -->
+  <path d="M40 18 L50 28 L45 28 L45 26 L35 26 L35 28 L30 28 Z"
+        fill="white" opacity="0.8"/>
+</svg>
