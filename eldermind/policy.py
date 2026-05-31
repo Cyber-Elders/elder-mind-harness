@@ -122,6 +122,17 @@ def _tool_matches(rule: Rule, tool: str) -> bool:
     return tool in {t.lower() for t in rule.tools}
 
 
+def _norm(path: str) -> str:
+    """Normalize for cross-platform glob matching: Windows backslashes and
+    drive letters -> forward-slash POSIX form, lower-cased. So a Windows path
+    like 'C:\\Users\\me\\.aws\\credentials' matches the '**/.aws/credentials'
+    glob just like the macOS/Linux form does."""
+    p = (path or "").replace("\\", "/")
+    if len(p) > 1 and p[1] == ":":  # strip drive letter (C:/…)
+        p = p[2:]
+    return p.lower()
+
+
 def _target_matches(rule: Rule, target: str) -> bool:
     target = target or ""
     has_constraint = bool(rule.pattern) or bool(rule.target_glob)
@@ -129,11 +140,11 @@ def _target_matches(rule: Rule, target: str) -> bool:
         return True  # tool-only rule
     if rule.pattern is not None and re.search(rule.pattern, target):
         return True
+    norm = _norm(target)
     for glob in rule.target_glob:
+        g = _norm(glob)
         # Match both the full path and the basename so '**/.env' and '.env' work.
-        if fnmatch.fnmatch(target, glob) or fnmatch.fnmatch(
-            Path(target).name, Path(glob).name
-        ):
+        if fnmatch.fnmatch(norm, g) or fnmatch.fnmatch(Path(norm).name, Path(g).name):
             return True
     return False
 

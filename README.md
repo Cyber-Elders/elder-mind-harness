@@ -4,7 +4,7 @@
 
 # Elder Mind Governance Harness
 
-**Local-first agentic governance for coding agents.** A deterministic pre-tool-use gate that blocks risky actions, checks dependency installs for known-compromised packages, surfaces threat patterns, and can escalate high-risk calls to a multi-model "council" — all running on *your* machine with *your* model. Works in **Claude Code, OpenCode, and Kiro**.
+**Local-first agentic governance for coding agents.** A deterministic pre-tool-use gate that blocks risky actions, checks dependency installs for known-compromised packages, surfaces threat patterns, and can escalate high-risk calls to a multi-model "council" — all running on *your* machine with *your* model. Hard-blocks in **Claude Code, OpenCode, and Kiro**; advisory in **Cursor** and any MCP client — on **Windows, macOS, and Linux**. ([IDE × OS matrix](docs/IDE-SUPPORT.md))
 
 [![License](https://img.shields.io/badge/code-Apache--2.0-blue.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-CC--BY--4.0-lightgrey.svg)](LICENSE-DOCS)

@@ -34,6 +34,10 @@ _TOOL_ALIASES = {
     "execute_bash": "bash",
     "fs_write": "write",
     "fs_read": "read",
+    # Windows shells — pass through so windows-* policy rules match
+    "powershell": "powershell",
+    "pwsh": "powershell",
+    "cmd": "cmd",
 }
 
 

@@ -61,6 +61,17 @@ def evaluate(
                 "detail": w.detail,
                 "source": w.source,
             }
+            # Low-noise hygiene nudge on installs that aren't outright bad
+            # (OpenSSF guidance: pin + commit lockfile + npm ci / min release age).
+            if w.status in ("clean", "unknown"):
+                decision["reason"] += " · tip: pin the version + commit your lockfile (npm ci / uv lock)"
+
+    # Observe mode: never block — log what WOULD have happened, then proceed.
+    if cfg.mode == "observe" and decision["verdict"] in ("ask", "block"):
+        decision["observed_verdict"] = decision["verdict"]
+        decision["verdict"] = "warn"
+        decision["reason"] = f"[observe] would {decision['observed_verdict']} — {decision['reason']}"
+
     return decision
 
 

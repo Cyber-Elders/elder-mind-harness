@@ -20,6 +20,7 @@ class Config:
     supplychain_enabled: bool = False
     council_models: list[str] = field(default_factory=list)
     tier: str = "practitioner"
+    mode: str = "enforce"  # enforce | observe (observe = log/warn, never block)
 
 
 def config_path() -> Path:
@@ -50,8 +51,10 @@ def load_config(path: str | Path | None = None) -> Config:
     sc = data.get("supplychain", {}) or {}
     council = data.get("council", {}) or {}
     gov = data.get("governance", {}) or {}
+    mode = os.environ.get("ELDERMIND_MODE") or gov.get("mode", "enforce")
     return Config(
         supplychain_enabled=_env_override(bool(sc.get("enabled", False))),
         council_models=list(council.get("models", []) or []),
         tier=str(gov.get("tier", "practitioner")),
+        mode="observe" if str(mode).lower() == "observe" else "enforce",
     )

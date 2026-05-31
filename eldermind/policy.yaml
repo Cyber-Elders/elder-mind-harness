@@ -36,12 +36,32 @@ rules:
     likelihood: 5
     action: block
 
+  - id: windows-destructive-delete
+    description: PowerShell/cmd recursive force-delete or disk format (Windows).
+    asi: ASI02            # Tool Misuse
+    match:
+      tool: [bash, shell, powershell, pwsh, cmd]
+      pattern: '(?i)(Remove-Item|\bri\b|\brm\b)\s+.*-Recurse\b.*-Force\b|(\brd\b|\brmdir\b)\s+/[sq]|\bdel\b\s+/[sq]|\bformat\b\s+[a-z]:'
+    impact: 5
+    likelihood: 5
+    action: block
+
   - id: remote-code-execution
-    description: Piping a downloaded script straight into a shell.
+    description: Piping a downloaded script straight into a shell (Unix).
     asi: ASI05            # Unexpected Code Execution
     match:
       tool: [bash, shell]
       pattern: '(curl|wget)\s+[^|]*\|\s*(sudo\s+)?(bash|sh|zsh|python[0-9.]*)'
+    impact: 5
+    likelihood: 4
+    action: block
+
+  - id: windows-remote-code-execution
+    description: Download-and-run via PowerShell (iwr|iex) or encoded command.
+    asi: ASI05            # Unexpected Code Execution
+    match:
+      tool: [bash, shell, powershell, pwsh, cmd]
+      pattern: '(?i)(iwr|Invoke-WebRequest|curl|wget)\b.*\|\s*(iex|Invoke-Expression)|powershell(\.exe)?\s+.*-e(nc|ncodedcommand)\b'
     impact: 5
     likelihood: 4
     action: block

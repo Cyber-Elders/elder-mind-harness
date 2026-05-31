@@ -130,6 +130,21 @@ def test_evaluate_supplychain_blocks_malicious(monkeypatch):
     assert "ASI04" in (d["asi"] or "")
 
 
+def test_observe_mode_never_blocks():
+    d = evaluate("bash", "rm -rf /", policy=POLICY, config=Config(mode="observe"))
+    assert d["verdict"] == "warn"            # downgraded — proceeds
+    assert d["observed_verdict"] == "block"  # but records what would have happened
+    assert d["reason"].startswith("[observe]")
+
+
+def test_install_pinning_tip(monkeypatch):
+    monkeypatch.setattr(supplychain, "_query_osv",
+                        lambda pkg: supplychain.ScanResult(pkg, "clean", "no advisories", "osv-api"))
+    d = evaluate("bash", "npm install lodash@4.17.21", policy=POLICY, config=Config(supplychain_enabled=True))
+    assert "tip: pin" in d["reason"]
+    assert d["verdict"] == "allow"
+
+
 def test_curated_blocklist_overrides_clean_osv():
     # Even if OSV says clean, a curated exact-version match still blocks (defense in depth).
     from eldermind.supplychain import Package, check_package

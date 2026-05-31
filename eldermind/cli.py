@@ -114,6 +114,25 @@ def cmd_summary(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_explain(args: argparse.Namespace) -> int:
+    from .audit import read_events
+
+    matches = [e for e in read_events() if e.get("decision_id") == args.decision_id]
+    if not matches:
+        print(f"No audit entry found for {args.decision_id}")
+        return 1
+    e = matches[-1]  # latest occurrence
+    print(f"Decision {e.get('decision_id')}  ({e.get('ts')})")
+    print(f"  verdict : {e.get('verdict')}   outcome: {e.get('outcome')}")
+    print(f"  rule    : {e.get('rule_id')}   ASI: {e.get('asi')}   score: {e.get('score')}/25 ({e.get('tier')})")
+    print(f"  reason  : {e.get('reason')}")
+    ctx = e.get("context") or {}
+    if ctx:
+        print(f"  context : {json.dumps(ctx)}")
+    print(f"\n  Seen {len(matches)} time(s) in the audit log.")
+    return 0
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     try:
         from .server import run
@@ -136,7 +155,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
 
     n = sub.add_parser("init", help="guided install (interactive wizard)")
-    n.add_argument("tool", nargs="?", choices=["claude-code", "opencode", "kiro"], help="harness (prompted if omitted)")
+    n.add_argument("tool", nargs="?", choices=["claude-code", "opencode", "kiro", "cursor"], help="harness (prompted if omitted)")
     n.add_argument("--dir", help="project dir to install into (default: cwd)")
     n.set_defaults(func=cmd_init)
 
@@ -151,7 +170,7 @@ def build_parser() -> argparse.ArgumentParser:
     h.set_defaults(func=cmd_hook)
 
     i = sub.add_parser("install", help="wire the harness into a tool (non-interactive)")
-    i.add_argument("tool", choices=["claude-code", "opencode", "kiro"])
+    i.add_argument("tool", choices=["claude-code", "opencode", "kiro", "cursor"])
     i.add_argument("--dir", help="project dir to install into (default: cwd)")
     i.add_argument("--supplychain", action="store_true", help="enable supply-chain protection")
     i.set_defaults(func=cmd_install)
@@ -163,6 +182,10 @@ def build_parser() -> argparse.ArgumentParser:
     s = sub.add_parser("summary", help="print audit aggregate metrics")
     s.add_argument("--path", help="path to audit.jsonl (default: auto-resolve)")
     s.set_defaults(func=cmd_summary)
+
+    e = sub.add_parser("explain", help="explain a past decision by its id (from the audit log)")
+    e.add_argument("decision_id", help="e.g. EM-2169fd82a466")
+    e.set_defaults(func=cmd_explain)
 
     sv = sub.add_parser("serve", help="run the advisory MCP server")
     sv.set_defaults(func=cmd_serve)

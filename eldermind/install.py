@@ -190,10 +190,41 @@ def _install_kiro(root: Path, changes: list[str]) -> None:
     _register_mcp(root / ".kiro" / "settings" / "mcp.json", "mcpServers", _MCP_ENTRY, changes)
 
 
+_CURSOR_RULES_MD = """\
+---
+description: Elder Mind governance — check risky actions before running them.
+alwaysApply: true
+---
+# Elder Mind governance (advisory)
+
+Cursor has no blocking pre-tool hook, so governance here is advisory. Before you
+run a shell command, edit/read a sensitive file (.env, keys, .npmrc, .claude/,
+.vscode/, CI config), or install a dependency, call the `govern_check` MCP tool
+(action, target) and honour its verdict:
+- block / ask → stop and surface the reason to the user (do not proceed silently)
+- warn → proceed but tell the user why it was flagged
+Record sensitive actions with `audit_log`. Do not try to bypass the gate.
+"""
+
+
+def _install_cursor(root: Path, changes: list[str]) -> None:
+    # Cursor: no blocking pre-tool hook → advisory MCP + an always-on rule.
+    rules = root / ".cursor" / "rules" / "eldermind.mdc"
+    if rules.exists() and rules.read_text() == _CURSOR_RULES_MD:
+        changes.append(f"= {rules} (rule already present)")
+    else:
+        rules.parent.mkdir(parents=True, exist_ok=True)
+        rules.write_text(_CURSOR_RULES_MD)
+        changes.append(f"+ {rules} (advisory rule)")
+    _register_mcp(root / ".cursor" / "mcp.json", "mcpServers", _MCP_ENTRY, changes)
+    changes.append("! Cursor is ADVISORY only (no hard pre-tool block) — see docs/IDE-SUPPORT.md")
+
+
 _INSTALLERS = {
     "claude-code": _install_claude_code,
     "opencode": _install_opencode,
     "kiro": _install_kiro,
+    "cursor": _install_cursor,
 }
 
 
@@ -254,7 +285,7 @@ def guided_init(tool: str | None = None, target_dir: str | None = None) -> int:
         return ans or default
 
     if tool is None:
-        tool = ask("Which coding agent? (claude-code / opencode / kiro)", "claude-code")
+        tool = ask("Which coding agent? (claude-code / opencode / kiro = hard-block · cursor = advisory)", "claude-code")
     if tool not in _INSTALLERS:
         print(f"unknown tool: {tool}")
         return 1
