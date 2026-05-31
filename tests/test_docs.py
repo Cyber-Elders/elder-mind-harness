@@ -153,6 +153,36 @@ def test_documented_extras_exist():
 # --------------------------------------------------------------------------
 # Tier semantics described in README ↔ gate behaviour
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# QA guard — no internal / private architecture references leak into the repo.
+# (Brand terms "Elder Mind" / "Cyber Elders" / cyberelders.com are intentional.)
+# --------------------------------------------------------------------------
+_FORBIDDEN = re.compile(
+    r"192\.168\.|157\.90\.24|\bds9\b|\bds10\b|jarvis|hetzner|gitea\.cyberelders|:2222|:4444|:3333"
+    r"|compliance-risk-agent|ops-executive|platform-agent|infrastructure-monitor"
+    r"|methodology-v8|F11-RISK|sentineldecoy|\beldernats\b|cost portal|advocatus|cio-agent"
+    r"|Sovereign Override|\bNATS\b|\bmTLS\b|Merkle|/Users/|kovnaidoo|cbb4d2eb|gho_[A-Za-z0-9]",
+    re.IGNORECASE,
+)
+_SCAN_EXT = {".md", ".py", ".toml", ".yaml", ".yml", ".json", ".js", ".mdc", ".txt"}
+
+
+def test_no_internal_private_references():
+    self = Path(__file__).name
+    offenders: list[str] = []
+    for p in ROOT.rglob("*"):
+        if not p.is_file() or p.suffix not in _SCAN_EXT:
+            continue
+        parts = set(p.relative_to(ROOT).parts)
+        if {".venv", ".git", "dist", "__pycache__", ".eldermind"} & parts or p.name == self:
+            continue
+        text = p.read_text(encoding="utf-8", errors="ignore")
+        for i, line in enumerate(text.splitlines(), 1):
+            if _FORBIDDEN.search(line):
+                offenders.append(f"{p.relative_to(ROOT)}:{i}: {line.strip()[:80]}")
+    assert not offenders, "internal/private references leaked into the public repo:\n" + "\n".join(offenders)
+
+
 def test_readme_tier_descriptions_match_behaviour():
     from eldermind.config import Config
     from eldermind.gate import evaluate

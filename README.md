@@ -63,7 +63,7 @@ echo '{"action":"bash","target":"git push --force origin main"}' | eldermind che
 | **Pre-tool gate** | Deterministic `impact × likelihood` → allow / warn / ask / block on a versioned `policy.yaml`. Hard-blocks destructive deletes, force-push to protected branches, `curl\|bash`, secrets read/write. | No |
 | **Supply-chain** (opt-in) | On `npm/pip/cargo/...` installs, checks each package against the **OSV** database (+ OpenSSF malicious-packages) with an offline curated fallback, and optionally flags **brand-new versions** (release-age, via deps.dev). Catches known-compromised + suspiciously-fresh packages. | OSV / deps.dev when enabled; degrades offline |
 | **Threat detectors** | Heuristic regex surfacing (command-substitution, SSRF-to-metadata, path traversal, …), MITRE-tagged, written to the audit trail. Surfaces — does not hard-block legit code. | No |
-| **Council review** (BYO-LLM) | For high-risk calls, an MCP tool hands *your* model a structured deliberation task; with model routing, votes are combined by a consensus rule. No model? Falls back to asking you. | Uses your model only |
+| **[Council review](docs/COUNCIL.md)** (BYO-LLM) | For high-risk calls, an MCP tool hands *your* model a structured deliberation task; with model routing, votes are combined by a consensus rule. No model? Falls back to asking you. | Uses your model only |
 | **Tool-descriptor pinning** | Pins a hash of each MCP/tool descriptor on first use; flags drift ("rug-pulls") if name/schema/command/args/origin change after approval. | No |
 | **Audit trail** | Append-only, **hash-chained** `.eldermind/audit.jsonl` (tamper-evident — `eldermind verify`); reproducible decision ids; `eldermind summary` aggregates; `eldermind explain <id>` reconstructs a decision. | No |
 
@@ -147,6 +147,7 @@ The category framing: **local pre-action governance for coding agents** — the 
 
 | For | Doc |
 |---|---|
+| The Cyber Elder AI Council (deep dive) | [`docs/COUNCIL.md`](docs/COUNCIL.md) |
 | Architecture diagrams | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Honest OWASP/NIST mapping | [`docs/STANDARDS-MAP.md`](docs/STANDARDS-MAP.md) |
 | Trust boundary / what it does NOT do | [`THREAT_MODEL.md`](THREAT_MODEL.md) |
@@ -159,4 +160,4 @@ The category framing: **local pre-action governance for coding agents** — the 
 
 ## License
 
-Code is **Apache-2.0** ([LICENSE](LICENSE)), with an explicit patent grant. Documentation and methodology are **CC BY 4.0** ([LICENSE-DOCS](LICENSE-DOCS)). See [`NOTICE`](NOTICE) and [`docs/LICENSING.md`](docs/LICENSING.md) for the corporate-adoption rationale — adopt the code like any other Apache-2.0 dependency.
+© 2026 Cyber Elders. Code is **Apache-2.0** ([LICENSE](LICENSE)), with an explicit patent grant. Documentation and methodology are **CC BY 4.0** ([LICENSE-DOCS](LICENSE-DOCS)). See [`NOTICE`](NOTICE) and [`docs/LICENSING.md`](docs/LICENSING.md) for the corporate-adoption rationale — adopt the code like any other Apache-2.0 dependency.

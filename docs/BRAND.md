@@ -60,9 +60,10 @@ Use the gradient `green → blue → orange → purple` as the signature accent 
 ## Voice & tone
 
 Practical, standards-informed, **honest about limits**. Short sentences. Name the
-consequence ("This can execute remote code"), not the jargon. Never hype:
-the words to avoid are in `docs/STANDARDS-MAP.md` and the CI honesty gate
-(no "AI-powered", "compliant", "blocks prompt injection", "covers all 10").
+consequence ("This can execute remote code"), not the jargon. Never hype: avoid
+overclaiming compliance/certification, injection-blocking, full-coverage, or
+model-powered "intelligence" framing — the exact banned-claim list is enforced
+by the CI honesty gate and documented in `docs/STANDARDS-MAP.md`.
 
 Tagline: **"Govern the action. Teach the operator. Keep it local."**
 
