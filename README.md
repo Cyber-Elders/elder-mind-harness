@@ -10,7 +10,7 @@
 [![Docs](https://img.shields.io/badge/docs-CC--BY--4.0-lightgrey.svg)](LICENSE-DOCS)
 [![Version](https://img.shields.io/badge/version-0.1.0-orange.svg)](CHANGELOG.md)
 [![CI](https://img.shields.io/badge/CI-regression%20%2B%20UAT%20%C2%B7%20mac%2Fwin%2Flinux-blue.svg)](.github/workflows/ci.yml)
-[![Tested](https://img.shields.io/badge/tests-72%20%C2%B7%203%20personas-brightgreen.svg)](docs/TESTING.md)
+[![Tested](https://img.shields.io/badge/tests-83%20%C2%B7%203%20personas%20%C2%B7%20docs-brightgreen.svg)](docs/TESTING.md)
 [![Standards](https://img.shields.io/badge/OWASP_Agentic_2026-aware-green.svg)](docs/STANDARDS-MAP.md)
 [![NIST](https://img.shields.io/badge/NIST_AI_RMF-aligned-green.svg)](docs/STANDARDS-MAP.md)
 
@@ -38,8 +38,11 @@ Most agent-safety tools are **input/output guardrails** (filter prompts and outp
 ## Quick start
 
 ```bash
-pipx install eldermind          # or: pip install eldermind
-eldermind init claude-code      # guided setup — or: opencode | kiro
+# Pre-release (not yet on PyPI) — install from source:
+git clone <repo-url> && cd elder-mind-harness && pipx install .   # or: pip install .
+# Once published this becomes simply:  pipx install eldermind
+
+eldermind init claude-code      # guided setup — or: opencode | kiro | cursor
 ```
 
 `init` walks you (and your agent) through harness detection, a governance tier, optional supply-chain protection, and council models — then wires the pre-tool hook and writes `.eldermind/`. Prefer non-interactive? `eldermind install claude-code --supplychain`.
@@ -136,6 +139,7 @@ The category framing: **local pre-action governance for coding agents** — the 
 | `eldermind pin <list\|check\|reset>` | Pin tool/MCP descriptors and detect drift. |
 | `eldermind serve` | Advisory MCP server (needs `[mcp]` extra). |
 | `eldermind summary` | Audit aggregate metrics (NIST MEASURE). |
+| `eldermind version` | Print the installed version. |
 
 ---
 

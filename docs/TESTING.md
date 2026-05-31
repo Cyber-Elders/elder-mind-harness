@@ -19,6 +19,7 @@ network is mocked — so the same tests run identically on every OS and offline.
 | **Unit** | `tests/test_decide.py`, `tests/test_harness.py` | risk scoring + tier boundaries; policy matching (incl. cross-platform paths + Windows commands); detectors; supply-chain (OSV mock, blocklist override, subshell, release-age); council consensus; descriptor pinning; audit hash-chain + tamper detection; config/env overrides | many, fast |
 | **Integration** | `tests/test_journeys.py` (CLI E2E) | the installed `eldermind` console entrypoint blocks + writes a verifiable audit chain, via `python -m eldermind.cli` (cross-OS) | some |
 | **UAT / journeys** | `tests/test_journeys.py` | three persona journeys end-to-end (below) + audit integrity across a journey | few |
+| **Documentation UAT** | `tests/test_docs.py` | the docs are tested against the code so they can't drift: every README command exists in the CLI; the worked README example (verdict/score/tier/ASI/decision-id) is reproduced live; MCP tool list ↔ server; supported IDEs ↔ installer; STANDARDS-MAP rows ↔ policy ASIs; OWASP titles; documented extras ↔ pyproject; tier descriptions ↔ behaviour | doc-as-test |
 
 ## Personas under test (UAT)
 
