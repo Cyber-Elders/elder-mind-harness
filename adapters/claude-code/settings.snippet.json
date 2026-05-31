@@ -1,0 +1,16 @@
+{
+  "//": "Merged into .claude/settings.json by `eldermind install claude-code`. The MCP server is registered separately in .mcp.json (see adapters/README.md).",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Edit|Write|Read|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "eldermind hook claude-code"
+          }
+        ]
+      }
+    ]
+  }
+}

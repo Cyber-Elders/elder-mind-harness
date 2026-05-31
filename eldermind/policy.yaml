@@ -1,0 +1,97 @@
+# Elder Mind Governance Harness — default policy
+#
+# Deterministic, human-editable ruleset. Matched top-to-bottom, first match wins.
+# Each rule maps a risky (tool, target) pattern -> OWASP Agentic Top 10 (ASI)
+# category -> Risk Engine inputs (impact x likelihood) -> an action FLOOR.
+#
+# The escalation tier derived from impact x likelihood may RAISE the action
+# (warn -> ask -> block) but never lowers it below the rule's declared action.
+#
+# OWASP taxonomy: OWASP GenAI Security Project, "OWASP Top 10 for Agentic
+# Applications" (2026, final 1.0, published 2025-12-09):
+#   https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
+#   ASI01 Agent Goal Hijack            ASI06 Memory & Context Poisoning
+#   ASI02 Tool Misuse                  ASI07 Insecure Inter-Agent Communication
+#   ASI03 Identity & Privilege Abuse   ASI08 Cascading Failures
+#   ASI04 Agentic Supply Chain Vuln.   ASI09 Human-Agent Trust Exploitation
+#   ASI05 Unexpected Code Execution    ASI10 Rogue Agents
+#
+# actions: allow | warn | ask | block
+# impact/likelihood: integers 1-5
+
+version: "0.1"
+
+defaults:
+  unmatched: allow      # fail-open: unknown, unmatched actions are low-risk
+  on_error: ask         # fail-safe: if the gate itself errors, ask the human
+
+rules:
+  - id: destructive-recursive-delete
+    description: Recursive force-delete of a root, home, or HOME path.
+    asi: ASI02            # Tool Misuse (abusing the shell tool destructively)
+    match:
+      tool: [bash, shell]
+      pattern: 'rm\s+-[a-z]*[rf][a-z]*\s+(/|~|\$HOME|/\*)'
+    impact: 5
+    likelihood: 5
+    action: block
+
+  - id: remote-code-execution
+    description: Piping a downloaded script straight into a shell.
+    asi: ASI05            # Unexpected Code Execution
+    match:
+      tool: [bash, shell]
+      pattern: '(curl|wget)\s+[^|]*\|\s*(sudo\s+)?(bash|sh|zsh|python[0-9.]*)'
+    impact: 5
+    likelihood: 4
+    action: block
+
+  - id: tmp-script-execution
+    description: Executing or sourcing a script from a world-writable tmp dir.
+    asi: ASI05            # Unexpected Code Execution
+    match:
+      tool: [bash, shell]
+      pattern: '(bash|sh|zsh|source|\.)\s+/(tmp|var/tmp|dev/shm)/'
+    impact: 4
+    likelihood: 4
+    action: block
+
+  - id: git-force-push-protected
+    description: Force-push to a protected branch (main/master).
+    asi: ASI02            # Tool Misuse (overwriting protected history)
+    match:
+      tool: [bash, shell]
+      pattern: 'git\s+push\s+.*(--force|-f)\b.*\b(main|master)\b'
+    impact: 4
+    likelihood: 4
+    action: block
+
+  - id: write-secrets-file
+    description: Creating or editing a secrets / private-key file.
+    asi: ASI03            # Identity & Privilege Abuse
+    match:
+      tool: [edit, write, multiedit]
+      target_glob: ['**/.env', '**/.env.*', '**/*.pem', '**/id_rsa', '**/id_ed25519', '**/*.key']
+    impact: 4
+    likelihood: 4
+    action: ask
+
+  - id: read-cloud-credentials
+    description: Reading cloud or environment credential files.
+    asi: ASI03            # Identity & Privilege Abuse (audit/surface)
+    match:
+      tool: [read, cat]
+      target_glob: ['**/.aws/credentials', '**/.env', '**/.env.*', '**/.netrc']
+    impact: 4
+    likelihood: 3
+    action: ask
+
+  - id: outbound-data-upload
+    description: Outbound HTTP request carrying a request body or file upload.
+    asi: ASI02            # Tool Misuse (network tool used to exfiltrate data)
+    match:
+      tool: [bash, shell]
+      pattern: '(curl|wget)\s+.*(-d\b|--data\b|-T\b|--upload-file\b|-F\b|--form\b)'
+    impact: 4
+    likelihood: 3
+    action: warn

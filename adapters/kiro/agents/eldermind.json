@@ -1,0 +1,12 @@
+{
+  "name": "eldermind",
+  "description": "Deterministic pre-tool-use governance gate (OWASP/NIST aligned).",
+  "hooks": {
+    "preToolUse": [
+      {
+        "matcher": "execute_bash|fs_write|fs_read",
+        "command": "eldermind hook kiro"
+      }
+    ]
+  }
+}
