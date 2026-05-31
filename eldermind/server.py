@@ -64,6 +64,35 @@ def council_review(action: str, target: str, risk: dict | None = None, reason: s
 
 
 @mcp.tool()
+def pin_check(tool_name: str, descriptor: dict) -> dict:
+    """Pin a tool/MCP descriptor and detect drift ("rug-pulls").
+
+    Call this when you first connect a tool/MCP server and again before
+    trusting it later. `descriptor` should include identity/behaviour fields
+    (name, description, schema, command, args, env, origin/server).
+    Returns status: 'new' (pinned now), 'ok' (unchanged), or 'changed'
+    (descriptor differs from what was approved — treat as untrusted: stop and
+    ask the user before using the tool).
+    """
+    from .pinning import check
+    r = check(tool_name, descriptor)
+    out = {"status": r.status, "tool": r.name, "hash": r.hash, "previous": r.previous}
+    advice = {
+        "new": "first sight — pinned. Proceed, but mention it's newly trusted.",
+        "ok": "descriptor unchanged since approval — safe to use.",
+        "changed": "DESCRIPTOR CHANGED since approval — do NOT use until the user re-approves.",
+    }
+    out["advice"] = advice.get(r.status, "")
+    try:
+        record({"decision_id": None, "verdict": r.status, "rule_id": "tool-descriptor-pin",
+                "asi": "ASI02", "risk": {}, "reason": f"pin {r.status}: {tool_name}"},
+               outcome="pin_check", context={"tool": tool_name})
+    except OSError:
+        pass
+    return out
+
+
+@mcp.tool()
 def scan(command_or_lockfile: str) -> dict:
     """Supply-chain check (OSV) for an install command or lockfile path.
 

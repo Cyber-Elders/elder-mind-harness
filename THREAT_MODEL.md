@@ -32,6 +32,7 @@ A synchronous, in-process decision function invoked by a harness's pre-tool-use 
 | Outbound data upload | ASI02 Tool Misuse | Pattern → warn/ask |
 | Installing a known-compromised dependency (opt-in) | ASI04 Agentic Supply Chain | OSV check + curated override → block |
 | High-risk goal/tool decisions (optional) | ASI01 Agent Goal Hijack | BYO-LLM council review → ask |
+| Tool/MCP descriptor drift ("rug-pull") | ASI02 Tool Misuse | Descriptor pinning (TOFU) → flag on change |
 
 All decisions are auditable (`.eldermind/audit.jsonl`) with reproducible decision ids. Heuristic detectors additionally surface (and log) injection/SSRF/traversal patterns in tool args — surfacing, not a hard block.
 

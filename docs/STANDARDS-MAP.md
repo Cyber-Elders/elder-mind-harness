@@ -54,3 +54,6 @@ This is *alignment to the four-function structure*, not an RMF assessment or cer
 | supply-chain (OSV) on installs | ASI04 Agentic Supply Chain | MANAGE / MEASURE | block (opt-in) |
 | threat detectors (regex) | ASI02 / ASI05 (heuristic) | MEASURE | warn (surface) |
 | council review | ASI01 Agent Goal Hijack | MANAGE | ask (BYO-LLM) |
+| tool-descriptor pinning | ASI02 Tool Misuse (rug-pull / deceptive tool) | GOVERN / MEASURE | new/ok/changed (TOFU + drift) |
+
+Governance **tiers** (`explorer`/`practitioner`/`governed`/`operator`) and **observe mode** modulate how the MANAGE response is applied — deterministically, never relaxing a hard block.

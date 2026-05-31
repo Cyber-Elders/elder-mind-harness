@@ -60,9 +60,12 @@ echo '{"action":"bash","target":"git push --force origin main"}' | eldermind che
 | **Supply-chain** (opt-in) | On `npm/pip/cargo/...` installs, checks each package against the **OSV** database (+ OpenSSF malicious-packages), with an offline curated fallback. Catches known-compromised versions. | OSV API when enabled; degrades offline |
 | **Threat detectors** | Heuristic regex surfacing (command-substitution, SSRF-to-metadata, path traversal, …), MITRE-tagged, written to the audit trail. Surfaces — does not hard-block legit code. | No |
 | **Council review** (BYO-LLM) | For high-risk calls, an MCP tool hands *your* model a structured deliberation task; with model routing, votes are combined by a consensus rule. No model? Falls back to asking you. | Uses your model only |
-| **Audit trail** | Append-only `.eldermind/audit.jsonl` with reproducible decision ids; `eldermind summary` aggregates. | No |
+| **Tool-descriptor pinning** | Pins a hash of each MCP/tool descriptor on first use; flags drift ("rug-pulls") if name/schema/command/args/origin change after approval. | No |
+| **Audit trail** | Append-only `.eldermind/audit.jsonl` with reproducible decision ids; `eldermind summary` aggregates; `eldermind explain <id>` reconstructs a decision. | No |
 
-Two ways it plugs in: a **pre-tool hook** (the hard gate — Claude Code `PreToolUse`, OpenCode `tool.execute.before`, Kiro `preToolUse`) and an **advisory MCP server** (`govern_check`, `council_review`, `scan`, `audit_log`, `audit_summary`) usable from any MCP client.
+**Governance tiers** modulate strictness deterministically: `explorer` (low friction — ask→warn, but never relaxes a block), `practitioner` (default, knowledge-worker safe), `governed` (warn→ask), `operator` (strictest — warn→ask, ask→block). **Observe mode** (`ELDERMIND_MODE=observe`) logs what *would* have happened but never blocks — friction-free onboarding.
+
+Two ways it plugs in: a **pre-tool hook** (the hard gate — Claude Code `PreToolUse`, OpenCode `tool.execute.before`, Kiro `preToolUse`) and an **advisory MCP server** (`govern_check`, `council_review`, `scan`, `pin_check`, `audit_log`, `audit_summary`) usable from any MCP client.
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the wedge, runtime loop, component, and decision-engine diagrams.
 
@@ -127,6 +130,8 @@ The category framing: **local pre-action governance for coding agents** — the 
 | `eldermind install <tool> [--supplychain]` | Non-interactive install. |
 | `eldermind check '<json>'` | Evaluate a tool call (the universal hook target). Exit 0 allow/warn, 2 ask/block. |
 | `eldermind scan <install-cmd\|lockfile>` | Supply-chain check (OSV). |
+| `eldermind explain <decision-id>` | Reconstruct a past decision from the audit log. |
+| `eldermind pin <list\|check\|reset>` | Pin tool/MCP descriptors and detect drift. |
 | `eldermind serve` | Advisory MCP server (needs `[mcp]` extra). |
 | `eldermind summary` | Audit aggregate metrics (NIST MEASURE). |
 

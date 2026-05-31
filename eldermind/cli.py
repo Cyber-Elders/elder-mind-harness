@@ -133,6 +133,30 @@ def cmd_explain(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_pin(args: argparse.Namespace) -> int:
+    from .pinning import check, list_pins, reset
+
+    if args.pin_cmd == "list":
+        pins = list_pins()
+        if not pins:
+            print("no pinned tools yet")
+            return 0
+        for name, e in sorted(pins.items()):
+            print(f"  {name:30} {e.get('hash')}")
+        return 0
+    if args.pin_cmd == "reset":
+        ok = reset(args.name)
+        print(f"{'reset' if ok else 'no pin for'} {args.name}")
+        return 0
+    if args.pin_cmd == "check":
+        import json as _json
+        desc = _json.loads(args.descriptor)
+        r = check(args.name, desc)
+        print(_json.dumps({"status": r.status, "tool": r.name, "hash": r.hash, "previous": r.previous}))
+        return 0 if r.status in ("new", "ok") else 2
+    return 1
+
+
 def cmd_serve(args: argparse.Namespace) -> int:
     try:
         from .server import run
@@ -186,6 +210,16 @@ def build_parser() -> argparse.ArgumentParser:
     e = sub.add_parser("explain", help="explain a past decision by its id (from the audit log)")
     e.add_argument("decision_id", help="e.g. EM-2169fd82a466")
     e.set_defaults(func=cmd_explain)
+
+    p_ = sub.add_parser("pin", help="pin tool/MCP descriptors and detect drift (rug-pulls)")
+    psub = p_.add_subparsers(dest="pin_cmd", required=True)
+    psub.add_parser("list", help="list pinned tools")
+    pr = psub.add_parser("reset", help="forget a pin (re-trust on next sight)")
+    pr.add_argument("name")
+    pc = psub.add_parser("check", help="check a descriptor against its pin")
+    pc.add_argument("name")
+    pc.add_argument("descriptor", help="descriptor JSON")
+    p_.set_defaults(func=cmd_pin)
 
     sv = sub.add_parser("serve", help="run the advisory MCP server")
     sv.set_defaults(func=cmd_serve)

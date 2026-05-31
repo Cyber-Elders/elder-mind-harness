@@ -19,8 +19,22 @@ from .config import Config, load_config
 from .decide import decide
 from .policy import ACTION_SEVERITY, Policy
 
-_SHELL_TOOLS = {"bash", "shell"}
+_SHELL_TOOLS = {"bash", "shell", "powershell", "pwsh", "cmd"}
 _STATUS_VERDICT = {"malicious": "block", "vulnerable": "ask"}
+
+# Governance tiers change strictness deterministically (single lookup on the
+# computed verdict — never chained). explorer relaxes friction but NEVER
+# relaxes a hard block; operator is maximally strict.
+_TIER_ADJUST = {
+    "explorer": {"ask": "warn"},                    # low friction; block still blocks
+    "practitioner": {},                             # sensible default (knowledge worker)
+    "governed": {"warn": "ask"},                    # stricter
+    "operator": {"warn": "ask", "ask": "block"},    # strictest
+}
+
+
+def _apply_tier(verdict: str, tier: str) -> str:
+    return _TIER_ADJUST.get(tier, {}).get(verdict, verdict)
 
 
 def _more_severe(a: str, b: str) -> str:
@@ -65,6 +79,13 @@ def evaluate(
             # (OpenSSF guidance: pin + commit lockfile + npm ci / min release age).
             if w.status in ("clean", "unknown"):
                 decision["reason"] += " · tip: pin the version + commit your lockfile (npm ci / uv lock)"
+
+    # Governance tier adjusts strictness (deterministic).
+    adjusted = _apply_tier(decision["verdict"], cfg.tier)
+    if adjusted != decision["verdict"]:
+        decision["reason"] += f" · tier '{cfg.tier}': {decision['verdict']}→{adjusted}"
+        decision["verdict"] = adjusted
+        decision["suggest"] = "ask" if adjusted in ("ask", "block") else adjusted
 
     # Observe mode: never block — log what WOULD have happened, then proceed.
     if cfg.mode == "observe" and decision["verdict"] in ("ask", "block"):
