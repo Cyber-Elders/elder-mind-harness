@@ -153,6 +153,7 @@ The category framing: **local pre-action governance for coding agents** — the 
 
 | For | Doc |
 |---|---|
+| **The Elder Mind idea** (concept / vision) | [`docs/CONCEPT.md`](docs/CONCEPT.md) |
 | The Cyber Elder AI Council (deep dive) | [`docs/COUNCIL.md`](docs/COUNCIL.md) |
 | Architecture diagrams | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
 | Honest OWASP/NIST mapping | [`docs/STANDARDS-MAP.md`](docs/STANDARDS-MAP.md) |
