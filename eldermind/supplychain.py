@@ -107,26 +107,69 @@ def _split_name_version(token: str, ecosystem: str) -> Package | None:
     return Package(ecosystem=ecosystem, name=name.strip(), version=(version.strip() if version else None))
 
 
+# Flags that take a following value (so we skip the value, not treat it as a pkg).
+_VALUE_FLAGS = {
+    "-r", "--requirement", "-c", "--constraint", "-i", "--index-url",
+    "--extra-index-url", "-f", "--find-links", "-e", "--editable",
+    "--platform", "--python-version", "-t", "--target", "-d", "--dest",
+    "-o", "--output", "--prefix", "--root",
+}
+# Shell separators that bound one command segment (so `a && b` is two installs).
+_SEP = re.compile(r"&&|\|\||;|\n|\|")
+
+
+def _looks_non_package(tok: str) -> bool:
+    """True for tokens that are clearly not a registry package name — URLs, VCS
+    specs, local paths, requirement files — so we don't query OSV with garbage."""
+    low = tok.lower()
+    return (
+        "://" in tok or tok.startswith(("git+", "./", "../", "/", "~"))
+        or low.endswith((".txt", ".in", ".toml", ".cfg"))
+        or tok in {".", ".."}
+    )
+
+
 def parse_install_commands(command: str) -> list[Package]:
     """Extract packages from any install/add command in the (possibly
-    subshell-wrapped) command string."""
+    subshell-wrapped) command string.
+
+    Robust to: subshell wrappers, `&&`/`;`/`|` chaining, quotes around tokens,
+    value-taking flags (`-r reqs.txt`, `--index-url URL`), and VCS/path/URL
+    specs (skipped, not misparsed). Results are de-duplicated."""
     packages: list[Package] = []
+    seen: set[tuple[str, str | None, str | None]] = set()
+    segments: list[str] = []
     for cmd in _strip_subshell(command):
-        tokens = cmd.replace("&&", " ").replace(";", " ").split()
-        i = 0
-        while i < len(tokens):
-            tool = tokens[i].split("/")[-1]  # handle absolute paths
+        segments.extend(_SEP.split(cmd))
+    for seg in segments:
+        tokens = [t.strip().strip("'\"") for t in seg.split()]
+        tokens = [t for t in tokens if t]
+        n = len(tokens)
+        for j in range(n - 1):
+            tool = tokens[j].split("/")[-1]  # handle absolute paths
             eco = _INSTALLERS.get(tool)
-            if eco and i + 1 < len(tokens):
-                verb = tokens[i + 1]
-                if verb in _INSTALL_VERBS or (tool == "go" and verb == "get"):
-                    for tok in tokens[i + 2 :]:
-                        if tok.startswith("-"):
-                            continue
-                        pkg = _split_name_version(tok, eco)
-                        if pkg and pkg.name:
-                            packages.append(pkg)
-            i += 1
+            if not eco:
+                continue
+            verb = tokens[j + 1]
+            if verb not in _INSTALL_VERBS and not (tool == "go" and verb == "get"):
+                continue
+            k = j + 2
+            while k < n:
+                tok = tokens[k]
+                if tok.startswith("-"):
+                    k += 2 if tok in _VALUE_FLAGS else 1  # skip flag (+ its value)
+                    continue
+                if _looks_non_package(tok):
+                    k += 1
+                    continue
+                pkg = _split_name_version(tok, eco)
+                if pkg and pkg.name:
+                    key = (pkg.ecosystem, pkg.name, pkg.version)
+                    if key not in seen:
+                        seen.add(key)
+                        packages.append(pkg)
+                k += 1
+            break  # one install verb per segment is enough
     return packages
 
 

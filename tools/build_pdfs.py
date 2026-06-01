@@ -157,10 +157,13 @@ def build_overview(st):
     f = _banner()
     f += [
         Paragraph("Local-first agentic governance for coding agents", st["h1"]),
+        Paragraph("Your AI coding agent acts on its own — running commands, editing files, installing "
+                  "packages. Elder Mind adds the pause before the one action that could hurt: it blocks "
+                  "it, explains why in plain language, and logs it.", st["lead"]),
         Paragraph("A deterministic pre-tool-use gate that blocks risky actions, checks dependency "
                   "installs against known-compromised packages, surfaces threat patterns, and can "
                   "escalate high-risk calls to a multi-model council — on <b>your</b> machine, with "
-                  "<b>your</b> model.", st["lead"]),
+                  "<b>your</b> model.", st["body"]),
         Paragraph("THE WEDGE", st["h2"]),
         Paragraph("Governance that runs as your coding agent's own pre-tool-use hook — local, "
                   "deterministic, and auditable — not a control plane your agent phones home to. "
@@ -193,6 +196,11 @@ def build_user_guide(st):
     f += [
         Paragraph("User Guide", st["h1"]),
         Paragraph("Install, configure, and operate the Elder Mind Governance Harness.", st["muted"]),
+
+        Paragraph("<b>Not a command-line person?</b> You don't need to be. Ask your AI assistant to "
+                  "<i>\"install the Elder Mind governance harness and set it up for me\"</i> — Elder Mind is "
+                  "designed to be installed <b>by</b> the agent it will govern. The steps below are exactly "
+                  "what it does on your behalf, so you can follow along or do them yourself.", st["body"]),
 
         Paragraph("1 · INSTALL", st["h2"]),
         Paragraph("Pre-release (from source); becomes <font name=Courier>pipx install eldermind</font> once published:", st["body"]),
@@ -247,6 +255,7 @@ def build_quickstart(st):
     f += [
         Paragraph("Quick Start", st["h1"]),
         Paragraph("From zero to your first blocked action in three steps.", st["muted"]),
+        Paragraph("Not technical? Ask your AI assistant to do steps 1–3 for you and explain each one.", st["muted"]),
         Spacer(1, 4),
         Paragraph("1 · Install &amp; wire it into your agent", st["h2"]),
         Paragraph("pipx install .            # from source (pre-release)<br/>"

@@ -107,10 +107,17 @@ def evaluate(
         decision["suggest"] = "ask" if adjusted in ("ask", "block") else adjusted
 
     # Observe mode: never block — log what WOULD have happened, then proceed.
-    if cfg.mode == "observe" and decision["verdict"] in ("ask", "block"):
-        decision["observed_verdict"] = decision["verdict"]
-        decision["verdict"] = "warn"
-        decision["reason"] = f"[observe] would {decision['observed_verdict']} — {decision['reason']}"
+    # This means NOTHING is enforced; surface that loudly so observe isn't
+    # mistaken for protection (see THREAT_MODEL "Observe mode").
+    if cfg.mode == "observe":
+        decision["mode"] = "observe"
+        if decision["verdict"] in ("ask", "block"):
+            decision["observed_verdict"] = decision["verdict"]
+            decision["verdict"] = "warn"
+            decision["reason"] = (
+                f"[observe] OBSERVE MODE — NOTHING IS BLOCKED — "
+                f"would {decision['observed_verdict']}: {decision['reason']}"
+            )
 
     return decision
 

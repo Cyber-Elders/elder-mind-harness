@@ -40,7 +40,7 @@ Pick a **tier** during `init` (or in `.eldermind/config.toml`):
 
 1. `eldermind init <tool> --supplychain` in a shared repo, then commit `.eldermind/policy.yaml` — every teammate's agent now obeys the same rules.
 2. Set the tier in `.eldermind/config.toml` (e.g. `governed`) and turn on supply-chain protection.
-3. The append-only, tamper-evident `.eldermind/audit.jsonl` (`eldermind verify`, `eldermind summary`) gives you reviewable evidence of what agents did.
+3. The append-only, hash-chained `.eldermind/audit.jsonl` (`eldermind verify`, `eldermind summary`) gives you reviewable evidence of what agents did. `verify` catches accidental/partial edits and prints the chain head — record that head outside the repo if you need to detect a deliberate full rewrite (see [`THREAT_MODEL.md`](THREAT_MODEL.md)).
 4. Editing agent/CI config (`.claude/`, `.vscode/`, `.github/workflows/`) and secrets files is gated by default — see [`docs/STANDARDS-MAP.md`](docs/STANDARDS-MAP.md).
 
 ---
@@ -48,13 +48,11 @@ Pick a **tier** during `init` (or in `.eldermind/config.toml`):
 ## Non-technical operator
 *(you've started using an AI agent and don't want to break things)*
 
-1. Install and run `eldermind init <your tool>`. Choose the **`explorer`** tier — it warns instead of constantly interrupting, but **never** lets through the truly dangerous stuff.
-2. Prefer to just watch first? Set observe mode — it logs what it *would* have done, but blocks nothing:
-   ```bash
-   ELDERMIND_MODE=observe eldermind init claude-code
-   ```
-3. Every time something is flagged you get a **plain-language reason** ("This can execute remote code on your machine") — read it; that's how you learn safe agent habits.
-4. When in doubt, ask your agent to explain: *"why did Elder Mind flag that?"* — it can call `eldermind explain <decision-id>`.
+1. **The easiest way — let your agent do it.** Tell your AI assistant: *"Please install the Elder Mind governance harness and walk me through the setup."* Your AI assistant can install it for you and explain each choice as it goes — you don't need to touch a command line.
+2. Ask for the **`explorer`** tier — it warns instead of constantly interrupting, but **never** lets through the truly dangerous stuff. (Doing it yourself? `eldermind init <your tool>`.)
+3. Prefer to just watch first? Ask your agent to *"set up Elder Mind in observe mode"* — it logs what it *would* have done, but blocks nothing.
+4. Every time something is flagged you get a **plain-language reason** ("This can execute remote code on your machine") — read it; that's how you learn safe agent habits.
+5. When in doubt, ask your agent to explain: *"why did Elder Mind flag that?"* — it can call `eldermind explain <decision-id>`.
 
 ---
 

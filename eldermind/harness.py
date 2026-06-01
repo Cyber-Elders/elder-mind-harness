@@ -50,7 +50,8 @@ def _target_from_input(tool: str, tool_input: dict) -> str:
     """Pull the primary argument out of a harness tool_input dict."""
     if not isinstance(tool_input, dict):
         return str(tool_input)
-    for key in ("command", "file_path", "path", "filePath", "target", "cmd", "content"):
+    for key in ("command", "file_path", "path", "filePath", "target", "cmd",
+                "url", "notebook_path", "content"):
         if key in tool_input and tool_input[key]:
             return str(tool_input[key])
     # Fall back to the whole thing so a rule can still inspect it.

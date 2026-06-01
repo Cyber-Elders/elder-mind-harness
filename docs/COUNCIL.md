@@ -19,8 +19,12 @@ that *might* be fine in context. Three failure modes the council guards against:
 - **One model's blind spot.** A single model can rationalize a bad action or
   flag a benign one. Independent judges with a consensus rule dampen both.
 - **Goal hijack (OWASP ASI01).** If untrusted content has quietly steered the
-  agent, asking a *fresh* model "is this action consistent with the stated
-  goal?" can catch it — a deterministic pattern can't.
+  agent, asking "is this action consistent with the stated goal?" can catch it —
+  a deterministic pattern can't. **Caveat:** with the *default* single-model
+  config this is the *same* model that proposed the action grading its own
+  homework (and any injection in its context travels into the review prompt), so
+  it acts mainly as a structured pause, not an independent check. Genuine
+  independence requires configuring a *different* model (see Configuring models).
 - **Reflexive approval.** Routing a high-risk call through a structured review
   (instead of a one-tap "allow") slows the human down at exactly the right moment.
 
@@ -40,6 +44,12 @@ The council only engages on **`ask`-tier** decisions (risk score ~10–19). Hard
 blocks stay hard; allows stay fast. If no model is configured, the `ask` simply
 falls back to **asking the human** — the council never becomes a hard dependency.
 
+> **It's an advisory path, by design.** The council is exposed as the
+> `council_review` MCP tool, which the host agent *chooses* to call on an `ask`
+> verdict — it is **not** wired into the deterministic hard-gate hook (which only
+> ever allows/warns/asks/blocks). So the council can strengthen an `ask` into a
+> considered decision, but the hard gate's behaviour does not depend on it.
+
 ## How it works (BYO-LLM)
 
 1. The gate produces an `ask` verdict with its reasoning (rule, OWASP tag, risk score, plain-language preview).
@@ -49,7 +59,7 @@ falls back to **asking the human** — the council never becomes a hard dependen
    - **Destructive / irreversible action** (delete, force-push, overwrite, …) → **unanimous to proceed**. Any single BLOCK vote stops it.
    - **Otherwise** → **simple majority**.
    - **Tie or any abstention** → **BLOCK** (conservative default).
-5. The outcome is written to the tamper-evident audit log like any other decision.
+5. The outcome is written to the hash-chained audit log like any other decision.
 
 Because the deliberation runs in *your* environment with *your* models, the
 council's quality scales with the models you give it — and nothing leaves your

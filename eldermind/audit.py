@@ -4,9 +4,16 @@ Audit trail — append-only, hash-chained JSONL.
 
 One JSON object per line in .eldermind/audit.jsonl. Each entry carries `prev`
 (the previous entry's hash) and `hash` (sha256 over this entry incl. `prev`),
-forming a tamper-evident chain: altering, reordering, or deleting any entry
-breaks the chain, which `verify()` detects. No external service, no DB — the
-chain is local. `audit.head` caches the latest hash for O(1) appends.
+forming a hash chain: `verify()` detects accidental or partial edits —
+altering, reordering, or dropping an entry without recomputing the chain.
+
+IMPORTANT (honest scope): this is tamper-EVIDENT against careless edits, not
+tamper-PROOF. An attacker (or a compromised agent) with write access to
+`.eldermind/` can delete an entry and recompute the whole chain + `audit.head`,
+and `verify()` would then pass. There is no external anchor here. To detect a
+full rewrite, record the head hash off-box (`eldermind verify` prints it). See
+THREAT_MODEL.md "Self-protection & audit integrity". No external service, no DB
+— the chain is local. `audit.head` caches the latest hash for O(1) appends.
 
 The decision itself is deterministic (see decide.py); the audit event adds a
 wall-clock timestamp — the per-event uniqueness the decision_id omits.
@@ -58,6 +65,12 @@ def _read_head() -> str:
     # fall back to the last line's hash, else genesis
     events = read_events()
     return events[-1].get("hash", _GENESIS) if events else _GENESIS
+
+
+def head_hash() -> str:
+    """Current chain head. Record this externally (out of `.eldermind/`) to
+    detect a full-chain rewrite that local `verify()` alone cannot catch."""
+    return _read_head()
 
 
 def record(decision: dict, outcome: str = "decided", context: dict | None = None) -> str:

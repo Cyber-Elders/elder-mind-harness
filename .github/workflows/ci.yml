@@ -114,6 +114,21 @@ jobs:
           print("bundled data OK")
           PY
 
+  # ---- Self supply-chain audit: a supply-chain tool must scan its own deps ----
+  self-audit:
+    name: Self supply-chain audit (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e . pip-audit
+      - name: Audit our own dependency tree (OSV/PyPI advisories)
+        # Our runtime dep surface is tiny (pyyaml). pip-audit skips the local
+        # editable package; it fails the build on any known-vulnerable dependency.
+        run: pip-audit --desc
+
   # ---- Branded collateral: PDFs byte-stable + demo regenerates ----
   docs-collateral:
     name: Branded collateral

@@ -27,13 +27,28 @@ defaults:
 
 rules:
   - id: destructive-recursive-delete
-    description: Recursive force-delete of a root, home, or HOME path.
+    description: >-
+      Recursive/forced delete of a root, home, glob, or cwd target. Matches the
+      short (-rf / -fr), split (-r -f), and GNU long (--recursive / --force)
+      flag forms, with or without quotes around the target. NOTE: a deterministic
+      pattern cannot catch every equivalent spelling (e.g. variable-indirected
+      `$X -rf /`); see THREAT_MODEL.md "Known bypasses".
     asi: ASI02            # Tool Misuse (abusing the shell tool destructively)
     match:
       tool: [bash, shell]
-      pattern: 'rm\s+-[a-z]*[rf][a-z]*\s+(/|~|\$HOME|/\*)'
+      pattern: '(?i)\brm\s+(?=.*(--recursive|--force|-[a-z]*[rf]))(?=.*[\s"''](/|~|\$HOME|\*|\.(\s|$|["''])))'
     impact: 5
     likelihood: 5
+    action: block
+
+  - id: find-delete-or-exec
+    description: Bulk delete / arbitrary exec via find (-delete or -exec rm).
+    asi: ASI02            # Tool Misuse
+    match:
+      tool: [bash, shell]
+      pattern: '(?i)\bfind\s+.*(\s-delete\b|-exec\s+rm\b)'
+    impact: 5
+    likelihood: 4
     action: block
 
   - id: windows-destructive-delete
@@ -47,11 +62,15 @@ rules:
     action: block
 
   - id: remote-code-execution
-    description: Piping a downloaded script straight into a shell (Unix).
+    description: >-
+      Piping a downloaded script straight into an interpreter, or process-
+      substitution (`bash <(curl …)`). Covers common interpreters (sh/bash/zsh/
+      dash/fish/python/perl/ruby/node/php). Staged download-then-run is not
+      caught here — see THREAT_MODEL.md "Known bypasses".
     asi: ASI05            # Unexpected Code Execution
     match:
       tool: [bash, shell]
-      pattern: '(curl|wget)\s+[^|]*\|\s*(sudo\s+)?(bash|sh|zsh|python[0-9.]*)'
+      pattern: '(curl|wget)\s+[^|]*\|\s*(sudo\s+)?(bash|sh|zsh|dash|fish|python[0-9.]*|perl|ruby|node|php)\b|(bash|sh|zsh|dash)\s+<\(\s*(curl|wget)'
     impact: 5
     likelihood: 4
     action: block
@@ -76,12 +95,29 @@ rules:
     likelihood: 4
     action: block
 
+  - id: tamper-governance-config
+    description: >-
+      Shell command that writes to or deletes Elder Mind's own config/audit or
+      the harness hook config — i.e. an agent disabling or blinding its own
+      governor. Best-effort self-protection (a determined process can still go
+      around it); see THREAT_MODEL.md "Self-protection & audit integrity".
+    asi: ASI03            # Identity & Privilege Abuse (controls what runs / the audit of it)
+    match:
+      tool: [bash, shell, powershell, pwsh, cmd]
+      pattern: '(?i)(>>?|\b(rm|tee|mv|cp|dd|truncate|chmod|sed|del|move|copy|Remove-Item|Set-Content|Out-File)\b)[^\n]*(\.eldermind\b|\.claude[\\/](settings|hooks)|\.kiro[\\/]agents|\.opencode[\\/]plugins)'
+    impact: 4
+    likelihood: 4
+    action: ask
+
   - id: git-force-push-protected
-    description: Force-push to a protected branch (main/master).
+    description: >-
+      Force-push to a protected branch (main/master). Matches --force / -f in
+      any position and the `+<ref>` force refspec; --force-with-lease included
+      (it still rewrites protected history).
     asi: ASI02            # Tool Misuse (overwriting protected history)
     match:
       tool: [bash, shell]
-      pattern: 'git\s+push\s+.*(--force|-f)\b.*\b(main|master)\b'
+      pattern: '(?i)\bgit\s+push\b(?=.*(--force|--force-with-lease|\s-f\b|\s\+))(?=.*\b(main|master)\b)'
     impact: 4
     likelihood: 4
     action: block
@@ -118,9 +154,11 @@ rules:
     match:
       tool: [edit, write, multiedit]
       target_glob:
+        - '**/.eldermind/**'      # Elder Mind's own policy/config/audit (self-protection)
         - '**/.claude/**'
         - '**/.cursor/**'
         - '**/.kiro/**'
+        - '**/.opencode/**'
         - '**/.vscode/tasks.json'
         - '**/.vscode/settings.json'
         - '**/.mcp.json'

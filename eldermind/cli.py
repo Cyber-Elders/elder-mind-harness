@@ -135,11 +135,13 @@ def cmd_explain(args: argparse.Namespace) -> int:
 
 
 def cmd_verify(args: argparse.Namespace) -> int:
-    from .audit import verify
+    from .audit import head_hash, verify
 
     r = verify(args.path)
     if r["ok"]:
         print(f"✓ audit chain intact — {r['entries']} entr{'y' if r['entries']==1 else 'ies'}")
+        print(f"  head: {head_hash()}")
+        print("  (record the head externally — a full local rewrite is not detectable on its own; see THREAT_MODEL.md)")
         return 0
     print(f"✗ audit chain BROKEN at entry {r['broken_at']} of {r['entries']}: {r['reason']}")
     return 2

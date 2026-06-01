@@ -18,8 +18,11 @@ import json
 import shutil
 from pathlib import Path
 
-# Claude Code tool names (PreToolUse matcher).
-_CLAUDE_MATCHER = "Bash|Edit|Write|Read|MultiEdit"
+# Claude Code tool names (PreToolUse matcher). Includes NotebookEdit/WebFetch/
+# Task and any MCP tool (mcp__*) so a tool outside the core five — e.g. a
+# malicious MCP server's tool running shell-equivalent actions — still hits the
+# gate (the policy's unmatched:allow default keeps benign calls cheap).
+_CLAUDE_MATCHER = "Bash|Edit|Write|Read|MultiEdit|NotebookEdit|WebFetch|Task|mcp__.*"
 # Kiro tool names (preToolUse matcher).
 _KIRO_MATCHER = "execute_bash|fs_write|fs_read"
 
