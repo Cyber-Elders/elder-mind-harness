@@ -246,7 +246,20 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _force_utf8() -> None:
+    """Windows consoles default to cp1252, which can't encode the verdict
+    glyphs (✓ ⛔ ⚠ · →) — printing them raises UnicodeEncodeError and would
+    CRASH the gate. Reconfigure stdout/stderr to UTF-8 (replace on the rare
+    terminal that still can't render a glyph) so the harness never dies on output."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")  # py3.7+
+        except (AttributeError, ValueError):
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _force_utf8()
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)

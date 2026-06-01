@@ -151,6 +151,19 @@ def test_journey_audit_chain_holds(hermetic_osv, monkeypatch, tmp_path):
 # --------------------------------------------------------------------------
 # CLI end-to-end — proves the installed console entrypoint works on this OS
 # --------------------------------------------------------------------------
+def test_cli_unicode_safe_under_cp1252(tmp_path):
+    """Reproduce the Windows console condition on any OS: a non-UTF-8 stdout
+    codec (cp1252) must NOT crash the CLI when it prints verdict glyphs (✓ ⛔ …).
+    Regression for the GitHub-Actions Windows failure."""
+    import os
+    env = {**os.environ, "ELDERMIND_DIR": str(tmp_path / ".eldermind"),
+           "PYTHONIOENCODING": "cp1252"}
+    # verify prints a ✓ — would UnicodeEncodeError on cp1252 without the fix
+    v = subprocess.run([sys.executable, "-m", "eldermind.cli", "verify"],
+                       capture_output=True, text=True, env=env)
+    assert v.returncode == 0, v.stdout + v.stderr
+
+
 def test_cli_e2e_blocks_and_audits(monkeypatch, tmp_path):
     _isolate_audit(monkeypatch, tmp_path)
     env = {**__import__("os").environ, "ELDERMIND_DIR": str(tmp_path / ".eldermind")}

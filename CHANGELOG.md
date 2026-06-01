@@ -30,6 +30,7 @@ First public release: the flagship local-first agentic governance harness for co
 - **Pre-publish QA guard** — `tests/test_docs.py::test_no_internal_private_references` scans the repo and fails CI if any internal/private architecture reference (IPs, hostnames, internal project names, infra jargon, local paths, tokens) leaks in. Repo verified clean.
 
 ### Fixed
+- **Windows UnicodeEncodeError (crash)** — the CLI prints verdict glyphs (`✓ ⛔ ⚠ ·`); on a cp1252 Windows console that raised `UnicodeEncodeError` and crashed `eldermind verify`/`init`/output. `cli.main()` now forces UTF-8 on stdout/stderr (`errors="replace"`). Caught by the GitHub-Actions Windows runner; regression test forces `PYTHONIOENCODING=cp1252`.
 - **Glob over-match** — a directory-suffix glob (`**/.claude/**`) had basename `**`, which `fnmatch` matched against *every* path, so `write-agent-or-ci-config` prompted on all file writes. The basename fallback now applies only to concrete-file globs. (Caught by the new UAT journeys.)
 - **Docs** — `eldermind version` was missing from the README Commands table (caught by the doc UAT); install instructions now show the from-source path (pre-PyPI) so the documented install works today.
 - **Supply-chain protection** (opt-in) — on package installs, checks each package against the **OSV.dev** API (+ OpenSSF malicious-packages) with a curated offline override blocklist; subshell-bypass aware. Maps to OWASP ASI04. `eldermind scan` for ad-hoc checks; `osv-scanner` used for lockfile scans when present.
