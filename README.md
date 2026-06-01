@@ -14,6 +14,12 @@
 [![Standards](https://img.shields.io/badge/OWASP_Agentic_2026-aware-green.svg)](docs/STANDARDS-MAP.md)
 [![NIST](https://img.shields.io/badge/NIST_AI_RMF-aligned-green.svg)](docs/STANDARDS-MAP.md)
 
+<p align="center">
+  <img src="docs/assets/demo-block.gif" alt="Elder Mind blocking a force-push to a protected branch, with the OWASP-mapped reason and an audit entry" width="760">
+</p>
+
+<sub>The same thing in text (every block is checked, explained, and logged locally):</sub>
+
 ```
 ⛔ Elder Mind blocked: bash(git push --force origin main)
    risk 16/25 (elevated_review) · OWASP ASI02 Tool Misuse · NIST RMF: MANAGE
@@ -45,7 +51,7 @@ git clone <repo-url> && cd elder-mind-harness && pipx install .   # or: pip inst
 eldermind init claude-code      # guided setup — or: opencode | kiro | cursor
 ```
 
-`init` walks you (and your agent) through harness detection, a governance tier, optional supply-chain protection, and council models — then wires the pre-tool hook and writes `.eldermind/`. Prefer non-interactive? `eldermind install claude-code --supplychain`.
+`init` walks you (and your agent) through harness detection, a governance tier, optional supply-chain protection, and council models — then wires the pre-tool hook and writes `.eldermind/`. Prefer non-interactive? `eldermind install claude-code --supplychain`. New here? **[START-HERE.md](START-HERE.md)** routes you by role (developer / team lead / security owner / non-technical).
 
 Try the gate with no agent at all:
 

@@ -25,7 +25,8 @@ dependencies = [
 [project.optional-dependencies]
 mcp = ["mcp>=1.2.0"]
 dev = ["pytest>=8.0"]
-pdf = ["reportlab>=4"]   # branded collateral generator (tools/build_pdfs.py)
+pdf = ["reportlab>=4"]   # branded PDF generator (tools/build_pdfs.py)
+demo = ["pillow>=10"]    # terminal-demo GIF generator (tools/build_demo.py)
 
 [project.scripts]
 eldermind = "eldermind.cli:main"

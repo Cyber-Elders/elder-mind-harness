@@ -99,8 +99,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[pdf]"
-      - name: Generate + check byte-stability (committed PDFs are up to date)
+      - run: pip install -e ".[pdf,demo]"
+      - name: PDFs — generate + check byte-stability (committed copies up to date)
         run: |
           python tools/build_pdfs.py
           for f in docs/pdf/Elder-Mind-Overview.pdf docs/pdf/Elder-Mind-User-Guide.pdf docs/pdf/Elder-Mind-Quickstart.pdf; do
@@ -110,10 +110,18 @@ jobs:
             echo "::error::committed PDFs are stale — run 'python tools/build_pdfs.py' and commit"; exit 1
           fi
           echo "branded PDFs present, non-empty, and up to date"
+      - name: Demo GIF — regenerates non-empty (fonts differ per OS, so no byte check)
+        run: |
+          python tools/build_demo.py
+          test -s docs/assets/demo-block.gif || { echo "::error::demo GIF missing/empty"; exit 1; }
+          test -s docs/assets/demo-block.png || { echo "::error::demo PNG missing/empty"; exit 1; }
+          echo "demo collateral generates cleanly"
       - uses: actions/upload-artifact@v4
         with:
           name: elder-mind-collateral
-          path: docs/pdf/*.pdf
+          path: |
+            docs/pdf/*.pdf
+            docs/assets/demo-block.*
 
   # ---- Build wheel + assert bundled data ----
   build:
