@@ -5,53 +5,55 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:   # run the full cross-OS matrix on demand
 
 permissions:
   contents: read
 
-# Use bash on every runner (Git Bash on Windows) so steps are OS-uniform.
+# Bash on every runner (Git Bash on Windows) so steps are OS-uniform.
 defaults:
   run:
     shell: bash
 
 jobs:
-  # ---- Regression: full unit + integration suite, on Mac / Windows / Linux ----
+  # ---- Regression: full suite on Ubuntu × all supported Pythons (cheap, 1×) ----
   regression:
-    name: Regression (${{ matrix.os }} · py${{ matrix.python }})
-    runs-on: ${{ matrix.os }}
+    name: Regression (ubuntu · py${{ matrix.python }})
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
-      - name: Install (with mcp + dev extras)
-        run: pip install -e ".[mcp,dev]"
-      - name: Unit + integration tests
-        run: python -m pytest tests/ -q --ignore=tests/test_journeys.py
+      - run: pip install -e ".[mcp,dev]"
+      - name: Full suite (unit + integration + UAT journeys + doc-as-test + QA guard)
+        run: python -m pytest tests/ -q
 
-  # ---- UAT: persona user-journeys, on Mac / Windows / Linux ----
-  user-journeys:
-    name: UAT user-journeys (${{ matrix.os }})
+  # ---- Cross-OS: the same suite on macOS + Windows, ONE Python.
+  #      Gated to main-pushes / manual dispatch — macOS bills 10×, Windows 2×,
+  #      so we don't burn the free budget on every PR. ----
+  cross-os:
+    name: Cross-OS (${{ matrix.os }})
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install -e ".[mcp,dev]"
-      - name: Persona journeys (technical / knowledge-worker / back-office) + CLI E2E
-        run: python -m pytest tests/test_journeys.py -v
+      - name: Full suite incl. persona UAT + Windows/path coverage
+        run: python -m pytest tests/ -q
 
-  # ---- Offline determinism (logic-only, fastest runner) ----
+  # ---- Offline determinism (logic-only) ----
   offline-determinism:
     name: Offline determinism
     runs-on: ubuntu-latest
@@ -79,8 +81,8 @@ jobs:
         run: |
           set -e
           if grep -rniE "(NIST|OWASP)[ -]*(compliant|certified)|covers all (10|ten)|blocks? (all )?prompt injection|AI[- ]powered" \
-               README.md docs/ THREAT_MODEL.md CHANGELOG.md \
-             | grep -viE "not .*(compliant|certified|ai.?powered)|never|isn't|aware|aligned|reduce malicious"; then
+               README.md docs/ THREAT_MODEL.md CHANGELOG.md START-HERE.md \
+             | grep -viE "not .*(compliant|certified|ai.?powered)|never|isn't|aware|aligned|reduce malicious|overclaim|forbidden|not a prompt"; then
             echo "::error::forbidden overclaim found"; exit 1
           fi
           if grep -rniE "ASI09.*Improper Error Handling|ASI10.*Unbounded Consumption" docs/ ; then
@@ -89,39 +91,6 @@ jobs:
           test -f THREAT_MODEL.md
           grep -qiE "does NOT do|out of scope" README.md
           echo "honesty audit passed"
-
-  # ---- Branded collateral: PDFs regenerate cleanly + stay byte-stable ----
-  docs-pdf:
-    name: Branded PDFs
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e ".[pdf,demo]"
-      - name: PDFs — generate + check byte-stability (committed copies up to date)
-        run: |
-          python tools/build_pdfs.py
-          for f in docs/pdf/Elder-Mind-Overview.pdf docs/pdf/Elder-Mind-User-Guide.pdf docs/pdf/Elder-Mind-Quickstart.pdf; do
-            test -s "$f" || { echo "::error::$f missing/empty"; exit 1; }
-          done
-          if ! git diff --quiet -- docs/pdf; then
-            echo "::error::committed PDFs are stale — run 'python tools/build_pdfs.py' and commit"; exit 1
-          fi
-          echo "branded PDFs present, non-empty, and up to date"
-      - name: Demo GIF — regenerates non-empty (fonts differ per OS, so no byte check)
-        run: |
-          python tools/build_demo.py
-          test -s docs/assets/demo-block.gif || { echo "::error::demo GIF missing/empty"; exit 1; }
-          test -s docs/assets/demo-block.png || { echo "::error::demo PNG missing/empty"; exit 1; }
-          echo "demo collateral generates cleanly"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: elder-mind-collateral
-          path: |
-            docs/pdf/*.pdf
-            docs/assets/demo-block.*
 
   # ---- Build wheel + assert bundled data ----
   build:
@@ -143,3 +112,34 @@ jobs:
           assert "eldermind/blocklist.json" in n, "blocklist.json not bundled"
           print("bundled data OK")
           PY
+
+  # ---- Branded collateral: PDFs byte-stable + demo regenerates ----
+  docs-collateral:
+    name: Branded collateral
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[pdf,demo]"
+      - name: PDFs — generate + byte-stability (committed copies up to date)
+        run: |
+          python tools/build_pdfs.py
+          for f in docs/pdf/Elder-Mind-Overview.pdf docs/pdf/Elder-Mind-User-Guide.pdf docs/pdf/Elder-Mind-Quickstart.pdf; do
+            test -s "$f" || { echo "::error::$f missing/empty"; exit 1; }
+          done
+          if ! git diff --quiet -- docs/pdf; then
+            echo "::error::committed PDFs are stale — run 'python tools/build_pdfs.py' and commit"; exit 1
+          fi
+      - name: Demo GIF — regenerates non-empty (fonts differ per OS, no byte check)
+        run: |
+          python tools/build_demo.py
+          test -s docs/assets/demo-block.gif || { echo "::error::demo GIF missing/empty"; exit 1; }
+          test -s docs/assets/demo-block.png || { echo "::error::demo PNG missing/empty"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: elder-mind-collateral
+          path: |
+            docs/pdf/*.pdf
+            docs/assets/demo-block.*
