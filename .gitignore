@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+
+# eldermind runtime
+.eldermind/
+
+# Node (opencode adapter dev)
+node_modules/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+._*

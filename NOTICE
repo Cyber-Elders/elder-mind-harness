@@ -1,0 +1,27 @@
+Elder Mind Governance Harness
+Copyright (c) 2026 Cyber Elders Pty Ltd
+
+This product is dual-licensed:
+  - Source code (the `eldermind/` package, `adapters/`, `tools/`, `tests/`,
+    and configuration) is licensed under the Apache License, Version 2.0.
+    See the LICENSE file.
+  - Documentation and methodology content (README, docs/, methodology/,
+    skills/, THREAT_MODEL.md, CHANGELOG.md) is licensed under the
+    Creative Commons Attribution 4.0 International License (CC BY 4.0).
+    See the LICENSE-DOCS file.
+
+SPDX-License-Identifier: Apache-2.0 AND CC-BY-4.0
+
+You may adopt the code as you would any Apache-2.0 dependency. The Apache-2.0
+license includes an express patent grant. Nothing in this software phones home;
+the optional supply-chain check queries the public OSV database only when
+explicitly enabled.
+
+Elder Mind reduces risk; it does not eliminate it. It is a best-effort,
+deterministic tripwire — not a security guarantee, and not a substitute for OS
+isolation, code review, and your own judgement. Provided AS IS, without warranty
+of any kind (see the LICENSE, sections 7-8).
+
+The bundled supply-chain blocklist (eldermind/blocklist.json) is derived from the
+OpenSSF malicious-packages dataset (Apache-2.0) and OSV (CC BY 4.0); attribution
+to those projects is gratefully made.

@@ -1,0 +1,198 @@
+# Elder Mind Governance Harness — default policy
+#
+# Deterministic, human-editable ruleset. Matched top-to-bottom, first match wins.
+# Each rule maps a risky (tool, target) pattern -> OWASP Agentic Top 10 (ASI)
+# category -> Risk Engine inputs (impact x likelihood) -> an action FLOOR.
+#
+# The escalation tier derived from impact x likelihood may RAISE the action
+# (warn -> ask -> block) but never lowers it below the rule's declared action.
+#
+# OWASP taxonomy: OWASP GenAI Security Project, "OWASP Top 10 for Agentic
+# Applications" (2026, final 1.0, published 2025-12-09):
+#   https://genai.owasp.org/resource/owasp-top-10-for-agentic-applications-for-2026/
+#   ASI01 Agent Goal Hijack            ASI06 Memory & Context Poisoning
+#   ASI02 Tool Misuse                  ASI07 Insecure Inter-Agent Communication
+#   ASI03 Identity & Privilege Abuse   ASI08 Cascading Failures
+#   ASI04 Agentic Supply Chain Vuln.   ASI09 Human-Agent Trust Exploitation
+#   ASI05 Unexpected Code Execution    ASI10 Rogue Agents
+#
+# actions: allow | warn | ask | block
+# impact/likelihood: integers 1-5
+
+version: "0.1"
+
+defaults:
+  unmatched: allow      # fail-open: unknown, unmatched actions are low-risk
+  on_error: ask         # fail-safe: if the gate itself errors, ask the human
+
+rules:
+  - id: destructive-recursive-delete
+    description: >-
+      Recursive/forced delete of a root, home, glob, or cwd target. Matches the
+      short (-rf / -fr), split (-r -f), and GNU long (--recursive / --force)
+      flag forms, with or without quotes around the target. NOTE: a deterministic
+      pattern cannot catch every equivalent spelling (e.g. variable-indirected
+      `$X -rf /`); see THREAT_MODEL.md "Known bypasses".
+    asi: ASI02            # Tool Misuse (abusing the shell tool destructively)
+    match:
+      tool: [bash, shell]
+      pattern: '(?i)\brm\s+(?=.*(--recursive|--force|-[a-z]*[rf]))(?=.*[\s"''](/|~|\$HOME|\*|\.(\s|$|["''])))'
+    impact: 5
+    likelihood: 5
+    action: block
+
+  - id: find-delete-or-exec
+    description: Bulk delete / arbitrary exec via find (-delete or -exec rm).
+    asi: ASI02            # Tool Misuse
+    match:
+      tool: [bash, shell]
+      pattern: '(?i)\bfind\s+.*(\s-delete\b|-exec\s+rm\b)'
+    impact: 5
+    likelihood: 4
+    action: block
+
+  - id: windows-destructive-delete
+    description: PowerShell/cmd recursive force-delete or disk format (Windows).
+    asi: ASI02            # Tool Misuse
+    match:
+      tool: [bash, shell, powershell, pwsh, cmd]
+      pattern: '(?i)(Remove-Item|\bri\b|\brm\b)\s+.*-Recurse\b.*-Force\b|(\brd\b|\brmdir\b)\s+/[sq]|\bdel\b\s+/[sq]|\bformat\b\s+[a-z]:'
+    impact: 5
+    likelihood: 5
+    action: block
+
+  - id: remote-code-execution
+    description: >-
+      Piping a downloaded script straight into an interpreter, or process-
+      substitution (`bash <(curl …)`). Covers common interpreters (sh/bash/zsh/
+      dash/fish/python/perl/ruby/node/php). Staged download-then-run is not
+      caught here — see THREAT_MODEL.md "Known bypasses".
+    asi: ASI05            # Unexpected Code Execution
+    match:
+      tool: [bash, shell]
+      pattern: '(curl|wget)\s+[^|]*\|\s*(sudo\s+)?(bash|sh|zsh|dash|fish|python[0-9.]*|perl|ruby|node|php)\b|(bash|sh|zsh|dash)\s+<\(\s*(curl|wget)'
+    impact: 5
+    likelihood: 4
+    action: block
+
+  - id: windows-remote-code-execution
+    description: Download-and-run via PowerShell (iwr|iex) or encoded command.
+    asi: ASI05            # Unexpected Code Execution
+    match:
+      tool: [bash, shell, powershell, pwsh, cmd]
+      pattern: '(?i)(iwr|Invoke-WebRequest|curl|wget)\b.*\|\s*(iex|Invoke-Expression)|powershell(\.exe)?\s+.*-e(nc|ncodedcommand)\b'
+    impact: 5
+    likelihood: 4
+    action: block
+
+  - id: tmp-script-execution
+    description: Executing or sourcing a script from a world-writable tmp dir.
+    asi: ASI05            # Unexpected Code Execution
+    match:
+      tool: [bash, shell]
+      pattern: '(bash|sh|zsh|source|\.)\s+/(tmp|var/tmp|dev/shm)/'
+    impact: 4
+    likelihood: 4
+    action: block
+
+  - id: tamper-governance-config
+    description: >-
+      Shell command that writes to or deletes Elder Mind's own config/audit or
+      the harness hook config — i.e. an agent disabling or blinding its own
+      governor. Best-effort self-protection (a determined process can still go
+      around it); see THREAT_MODEL.md "Self-protection & audit integrity".
+    asi: ASI03            # Identity & Privilege Abuse (controls what runs / the audit of it)
+    match:
+      tool: [bash, shell, powershell, pwsh, cmd]
+      pattern: '(?i)(>>?|\b(rm|tee|mv|cp|dd|truncate|chmod|sed|del|move|copy|Remove-Item|Set-Content|Out-File)\b)[^\n]*(\.eldermind\b|\.claude[\\/](settings|hooks)|\.kiro[\\/]agents|\.opencode[\\/]plugins)'
+    impact: 4
+    likelihood: 4
+    action: ask
+
+  - id: git-force-push-protected
+    description: >-
+      Force-push to a protected branch (main/master). Matches --force / -f in
+      any position and the `+<ref>` force refspec; --force-with-lease included
+      (it still rewrites protected history).
+    asi: ASI02            # Tool Misuse (overwriting protected history)
+    match:
+      tool: [bash, shell]
+      pattern: '(?i)\bgit\s+push\b(?=.*(--force|--force-with-lease|\s-f\b|\s\+))(?=.*\b(main|master)\b)'
+    impact: 4
+    likelihood: 4
+    action: block
+
+  - id: write-secrets-file
+    description: Creating or editing a secrets / private-key / registry-token file.
+    asi: ASI03            # Identity & Privilege Abuse
+    match:
+      tool: [edit, write, multiedit]
+      target_glob:
+        - '**/.env'
+        - '**/.env.*'
+        - '**/*.pem'
+        - '**/*.key'
+        - '**/*.p12'
+        - '**/*.pfx'
+        - '**/id_rsa'
+        - '**/id_ed25519'
+        - '**/id_ecdsa'
+        - '**/.npmrc'           # npm auth token
+        - '**/.pypirc'          # PyPI upload token
+        - '**/.docker/config.json'
+        - '**/.kube/config'
+    impact: 4
+    likelihood: 4
+    action: ask
+
+  - id: write-agent-or-ci-config
+    description: >-
+      Writing agent / IDE / CI config that controls execution — a known
+      supply-chain persistence target (Mini Shai-Hulud planted into .claude/
+      and .vscode/). Legitimate, but worth a human glance.
+    asi: ASI03            # Identity & Privilege Abuse (controls what runs)
+    match:
+      tool: [edit, write, multiedit]
+      target_glob:
+        - '**/.eldermind/**'      # Elder Mind's own policy/config/audit (self-protection)
+        - '**/.claude/**'
+        - '**/.cursor/**'
+        - '**/.kiro/**'
+        - '**/.opencode/**'
+        - '**/.vscode/tasks.json'
+        - '**/.vscode/settings.json'
+        - '**/.mcp.json'
+        - '**/.github/workflows/**'
+    impact: 4
+    likelihood: 3
+    action: ask
+
+  - id: read-cloud-credentials
+    description: Reading cloud / environment / registry credential files.
+    asi: ASI03            # Identity & Privilege Abuse (audit/surface)
+    match:
+      tool: [read, cat]
+      target_glob:
+        - '**/.aws/credentials'
+        - '**/.env'
+        - '**/.env.*'
+        - '**/.netrc'
+        - '**/.npmrc'
+        - '**/.pypirc'
+        - '**/.ssh/id_*'
+        - '**/.docker/config.json'
+        - '**/.kube/config'
+        - '**/gcloud/**/credentials*'
+    impact: 4
+    likelihood: 3
+    action: ask
+
+  - id: outbound-data-upload
+    description: Outbound HTTP request carrying a request body or file upload.
+    asi: ASI02            # Tool Misuse (network tool used to exfiltrate data)
+    match:
+      tool: [bash, shell]
+      pattern: '(curl|wget)\s+.*(-d\b|--data\b|-T\b|--upload-file\b|-F\b|--form\b)'
+    impact: 4
+    likelihood: 3
+    action: warn

@@ -1,0 +1,23 @@
+{
+  "_comment": "Curated hard-override blocklist of known-compromised package VERSIONS. Checked alongside the OSV API as defense-in-depth: a curated match blocks even if OSV hasn't flagged the version yet, and it still works offline. Only EXACT pinned versions match — never a blanket package-name block. Refresh monthly in CI from the OpenSSF malicious-packages feed; OSV (online) covers everything else dynamically.",
+  "_source": "OpenSSF malicious-packages (Apache-2.0) + OSV (CC-BY-4.0) + curated incident reports",
+  "_updated": "2026-05-29",
+  "entries": [
+    {
+      "ecosystem": "PyPI",
+      "name": "litellm",
+      "versions": ["1.82.7", "1.82.8"],
+      "severity": "critical",
+      "reason": "CI/CD poisoned Trivy Action, PyPI token exfil, .pth auto-exec payload (March 2026)",
+      "advisory": "Pin >=1.83.0"
+    },
+    {
+      "ecosystem": "npm",
+      "name": "axios",
+      "versions": ["1.14.1", "0.30.4"],
+      "severity": "critical",
+      "reason": "Maintainer account hijack, RAT via plain-crypto-js (March 2026)",
+      "advisory": "Avoid these versions"
+    }
+  ]
+}
