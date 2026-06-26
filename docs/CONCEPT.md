@@ -23,7 +23,7 @@ The name maps to three concrete things, from maker to mechanism:
 
 | Layer | What it is |
 |---|---|
-| **Cyber Elders** | The maker — the people/organisation behind the work (© Cyber Elders Pty Ltd). The "elders" whose security judgment is encoded into the tools. |
+| **Cyber Elders** | The maker — the people/organisation behind the work (© ZenBlue Pty Ltd t/a Cyber Elders). The "elders" whose security judgment is encoded into the tools. |
 | **Elder Mind** | The *governing mind* — the methodology and principles for governing agentic work: a small set of standards-grounded, honest rules about what an agent should pause on. The accumulated judgment, made legible. |
 | **The Governance Harness** | The *runtime* — this repository. The harness that puts Elder Mind into the loop of your coding agent: a deterministic pre-tool-use gate, plus supply-chain checks, threat detectors, and the council. |
 

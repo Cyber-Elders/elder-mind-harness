@@ -196,4 +196,4 @@ The category framing: **local pre-action governance for coding agents** — the 
 
 ## License
 
-© 2026 Cyber Elders Pty Ltd. Code is **Apache-2.0** ([LICENSE](LICENSE)), with an explicit patent grant. Documentation and methodology are **CC BY 4.0** ([LICENSE-DOCS](LICENSE-DOCS)). See [`NOTICE`](NOTICE) and [`docs/LICENSING.md`](docs/LICENSING.md) for the corporate-adoption rationale — adopt the code like any other Apache-2.0 dependency.
+© 2026 ZenBlue Pty Ltd t/a Cyber Elders. Code is **Apache-2.0** ([LICENSE](LICENSE)), with an explicit patent grant. Documentation and methodology are **CC BY 4.0** ([LICENSE-DOCS](LICENSE-DOCS)). See [`NOTICE`](NOTICE) and [`docs/LICENSING.md`](docs/LICENSING.md) for the corporate-adoption rationale — adopt the code like any other Apache-2.0 dependency.

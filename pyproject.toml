@@ -9,7 +9,7 @@ description = "Elder Mind — a local-first agentic governance harness for codin
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
-authors = [{ name = "Cyber Elders Pty Ltd" }]
+authors = [{ name = "ZenBlue Pty Ltd t/a Cyber Elders" }]
 keywords = ["agentic", "governance", "harness", "owasp", "nist", "mcp", "supply-chain", "claude-code", "opencode", "kiro", "guardrails"]
 classifiers = [
     "Development Status :: 3 - Alpha",

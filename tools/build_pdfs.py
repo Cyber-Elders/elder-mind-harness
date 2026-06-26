@@ -96,7 +96,7 @@ def _page_furniture(canvas, doc):
     canvas.line(20 * mm, 15 * mm, 190 * mm, 15 * mm)
     canvas.setFont(FONT, 7.5)
     canvas.setFillColor(MUTED)
-    canvas.drawString(20 * mm, 11 * mm, f"Elder Mind Governance Harness · {VERSION} · © 2026 Cyber Elders Pty Ltd · Apache-2.0 / CC BY 4.0")
+    canvas.drawString(20 * mm, 11 * mm, f"Elder Mind Governance Harness · {VERSION} · © 2026 ZenBlue Pty Ltd t/a Cyber Elders · Apache-2.0 / CC BY 4.0")
     canvas.drawRightString(190 * mm, 11 * mm, f"{doc.page}")
     # thin indigo spine on the left
     canvas.setFillColor(INDIGO_700)

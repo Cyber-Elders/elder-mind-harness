@@ -5,7 +5,7 @@ early (0.1.0 alpha) project, so the model is deliberately lightweight.
 
 ## Maintainership
 
-The project is maintained by **Cyber Elders Pty Ltd**. Today it is effectively
+The project is maintained by **ZenBlue Pty Ltd t/a Cyber Elders**. Today it is effectively
 single-maintainer ("BDFL-lite"): the maintainer has final say on what merges,
 the release cadence, and the project's direction.
 
